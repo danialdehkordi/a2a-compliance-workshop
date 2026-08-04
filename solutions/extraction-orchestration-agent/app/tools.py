@@ -1,10 +1,17 @@
-"""Reference Solution for Group A Tools."""
+"""
+===============================================================================
+🏛️ COMPLETE REFERENCE SOLUTION: Group A Tools
+===============================================================================
+This is the complete reference solution for Group A Exercises 1 & 2.
+===============================================================================
+"""
 
 import re
 from app.historical_db import get_vendor_baseline
 
 
 def extract_contract_facts(filename: str, text_content: str) -> dict:
+    """Extracts deterministic facts from contract text."""
     value_match = re.search(r"\$\s*([\d,]+)", text_content)
     contract_value = float(value_match.group(1).replace(",", "")) if value_match else 450000.0
 
@@ -31,6 +38,7 @@ def extract_contract_facts(filename: str, text_content: str) -> dict:
 
 
 async def calculate_historical_variance(facts: dict) -> dict:
+    """Compares extracted contract facts against historical vendor baselines in SQLite."""
     vendor = facts["vendor_name"]
     baseline = await get_vendor_baseline(vendor)
 

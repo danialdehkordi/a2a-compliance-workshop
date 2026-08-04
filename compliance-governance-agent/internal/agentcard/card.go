@@ -1,14 +1,14 @@
 /*
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group B - Go Agent Card Handler
+🏛️ WORKSHOP EXERCISES: Group B (Stage 2) - Go Agent Card Handler
 ===============================================================================
-Welcome, Group B (Go Governance & Policy Team)!
+Welcome, Group B (Stage 2) Developers!
 
-Your challenge in this file:
+Your hands-on mission in this file:
   • Exercise 1: Implement `HandleAgentCard()` at `/.well-known/agent.json`
 
-Complete solutions are available in `solutions/compliance-governance-agent/`
-if you need a reference during the workshop.
+Complete working solutions are available in:
+  `solutions/compliance-governance-agent/internal/agentcard/card.go`
 ===============================================================================
 */
 
@@ -29,7 +29,7 @@ type AgentCard struct {
 
 /*
 ===========================================================================
-TODO (Group B - Exercise 1): Serve the A2A Agent Card
+TODO (Group B / Stage 2 - Exercise 1): Serve the A2A Agent Card
 ===========================================================================
 Implement an HTTP handler function that outputs the Agent Card JSON structure.
 Fulfills the A2A Discovery Standard at `/.well-known/agent.json`.
@@ -48,13 +48,13 @@ func HandleAgentCard(baseURL string) http.HandlerFunc {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		// -------------------------------------------------------------------------
-		// YOUR CODE HERE (Exercise 1)
+		// TODO (Group B - Exercise 1): Implement Agent Card JSON output here!
 		// -------------------------------------------------------------------------
 		card := AgentCard{
-			Name:        "Compliance & Governance Agent (Go - TODO: Complete Exercise 1)",
-			Description: "Deterministic policy validator for contract limits.",
+			Name:        "Compliance & Governance Agent (Go - TODO: Implement Exercise 1)",
+			Description: "TODO (Group B / Stage 2 - Exercise 1): Complete HandleAgentCard in internal/agentcard/card.go",
 			URL:         baseURL,
-			Version:     "1.0.0",
+			Version:     "0.1.0-STUB",
 			Protocols:   []string{"JSON-RPC 2.0", "A2A/1.0"},
 		}
 

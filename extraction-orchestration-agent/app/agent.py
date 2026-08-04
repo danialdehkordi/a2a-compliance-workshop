@@ -1,13 +1,14 @@
 """
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group A - ADK RemoteA2aAgent Handoff
+🏛️ WORKSHOP EXERCISES: Group A (Stage 1) - ADK RemoteA2aAgent Handoff
 ===============================================================================
 In this module, you wire up the A2A protocol handoff to Group B's Go Agent:
 1. Fetch Group B's Agent Card (`/.well-known/agent.json`)
 2. Package facts & variance into JSON-RPC 2.0 `message/send` payload
 3. Post payload to Group B and return compliance verdict & certificate HTML
 
-Complete solutions are available in `solutions/extraction-orchestration-agent/app/agent.py`
+Complete working solutions are available in:
+  `solutions/extraction-orchestration-agent/app/agent.py`
 ===============================================================================
 """
 
@@ -36,7 +37,7 @@ def _get_identity_token(target_url: str) -> str | None:
 async def dispatch_a2a_compliance_check(case_id: str, facts: dict, variance: dict) -> dict:
     """
     ===========================================================================
-    TODO (Group A - Exercise 3): Dispatch A2A Handoff to Group B Go Agent
+    TODO (Group A / Stage 1 - Exercise 3): Dispatch A2A Handoff to Group B Go Agent
     ===========================================================================
     Steps to implement:
       1. If `USE_MOCK` is true, return `generate_mock_a2a_response(case_id, facts, variance)`.
@@ -60,9 +61,9 @@ async def dispatch_a2a_compliance_check(case_id: str, facts: dict, variance: dic
         return generate_mock_a2a_response(case_id, facts, variance)
 
     # -------------------------------------------------------------------------
-    # YOUR CODE HERE (Exercise 3)
+    # TODO (Group A - Exercise 3): Implement A2A protocol handoff logic here!
     # -------------------------------------------------------------------------
     raise NotImplementedError(
-        "TODO (Group A - Exercise 3): Implement A2A protocol handoff in app/agent.py!\n"
+        "TODO (Group A / Stage 1 - Exercise 3): Implement dispatch_a2a_compliance_check() in app/agent.py!\n"
         "Reference solution available in solutions/extraction-orchestration-agent/app/agent.py"
     )

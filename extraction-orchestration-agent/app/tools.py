@@ -1,6 +1,6 @@
 """
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group A - Field Extraction & Variance Calculation
+🏛️ WORKSHOP EXERCISES: Group A (Stage 1) - Field Extraction & Variance
 ===============================================================================
 Welcome Group A Developers!
 
@@ -8,8 +8,8 @@ Your hands-on mission in this file:
   • Exercise 1: Implement `extract_contract_facts()`
   • Exercise 2: Implement `calculate_historical_variance()`
 
-Complete solutions are available in `solutions/extraction-orchestration-agent/app/tools.py`
-if you need a reference during the workshop.
+Complete working solutions are available in:
+  `solutions/extraction-orchestration-agent/app/tools.py`
 ===============================================================================
 """
 
@@ -19,7 +19,7 @@ from app.historical_db import get_vendor_baseline
 def extract_contract_facts(filename: str, text_content: str) -> dict:
     """
     ===========================================================================
-    TODO (Group A - Exercise 1): Extract Contract Facts
+    TODO (Group A / Stage 1 - Exercise 1): Extract Contract Facts
     ===========================================================================
     Extract key legal fields from unstructured contract text.
 
@@ -31,18 +31,18 @@ def extract_contract_facts(filename: str, text_content: str) -> dict:
       - insurance_amount (float): Required insurance coverage in USD (e.g. 2000000.0)
 
     HINTS:
-      - Option A (Vertex AI): Use `google-genai` SDK with `response_schema`
+      - Option A (Vertex AI Gemini): Use `google-genai` SDK with `response_schema`
         and Pydantic to extract structured JSON with Gemini 2.0.
-      - Option B (Regex): Use `re.search(r"\$\s*([\d,]+)", text_content)` for contract value,
+      - Option B (Regex): Use `re.search(r"\$\s*([\d,]+)", text_content)` for value,
         `re.search(r"(\d+)\s*(?:year|yr)", text_content)` for term, and
         `"unlimited liability" in text_content.lower()` for liability cap.
     ===========================================================================
     """
     # -------------------------------------------------------------------------
-    # YOUR CODE HERE (Exercise 1)
+    # TODO (Group A - Exercise 1): Implement fact extraction logic here!
     # -------------------------------------------------------------------------
     raise NotImplementedError(
-        "TODO (Group A - Exercise 1): Implement contract fact extraction in app/tools.py!\n"
+        "TODO (Group A / Stage 1 - Exercise 1): Implement extract_contract_facts() in app/tools.py!\n"
         "Reference solution available in solutions/extraction-orchestration-agent/app/tools.py"
     )
 
@@ -50,7 +50,7 @@ def extract_contract_facts(filename: str, text_content: str) -> dict:
 async def calculate_historical_variance(facts: dict) -> dict:
     """
     ===========================================================================
-    TODO (Group A - Exercise 2): Calculate Historical Variance
+    TODO (Group A / Stage 1 - Exercise 2): Calculate Historical Variance
     ===========================================================================
     Compare extracted facts against historical vendor benchmarks in SQLite.
 
@@ -73,9 +73,9 @@ async def calculate_historical_variance(facts: dict) -> dict:
     ===========================================================================
     """
     # -------------------------------------------------------------------------
-    # YOUR CODE HERE (Exercise 2)
+    # TODO (Group A - Exercise 2): Implement historical variance calculation here!
     # -------------------------------------------------------------------------
     raise NotImplementedError(
-        "TODO (Group A - Exercise 2): Implement historical baseline variance calculation in app/tools.py!\n"
+        "TODO (Group A / Stage 1 - Exercise 2): Implement calculate_historical_variance() in app/tools.py!\n"
         "Reference solution available in solutions/extraction-orchestration-agent/app/tools.py"
     )

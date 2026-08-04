@@ -1,21 +1,18 @@
 /*
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group B - Go Deterministic Policy Engine
+🏛️ WORKSHOP EXERCISES: Group B (Stage 2) - Go Deterministic Policy Engine
 ===============================================================================
-Welcome to Group B's Core Policy Engine!
+Welcome Group B Developers!
 
-Your challenge in this file:
+Your hands-on mission in this file:
   • Exercise 3: Implement `EvaluateContractPolicy()` with deterministic rules
 
-Complete solutions are available in `solutions/compliance-governance-agent/`
+Complete working solutions are available in:
+  `solutions/compliance-governance-agent/internal/policy/engine.go`
 ===============================================================================
 */
 
 package policy
-
-import (
-	"fmt"
-)
 
 type ContractFacts struct {
 	CaseID          string  `json:"case_id"`
@@ -45,11 +42,11 @@ type PolicyCheckResult struct {
 
 /*
 ===========================================================================
-TODO (Group B - Exercise 3): Deterministic Policy Rule Evaluator
+TODO (Group B / Stage 2 - Exercise 3): Deterministic Policy Rule Evaluator
 ===========================================================================
 Evaluates incoming facts & historical variance against corporate policies:
 
-Rules to Evaluate:
+Rules to Implement:
   1. Contract Value > $500,000.00 -> Append Violation:
      "Contract value $X exceeds hard policy cap of $500,000.00"
   2. Term Length > 5 Years -> Append Violation:
@@ -71,51 +68,23 @@ func EvaluateContractPolicy(facts ContractFacts, variance HistoricalVariance) Po
 	var violations []string
 
 	// -------------------------------------------------------------------------
-	// YOUR CODE HERE (Exercise 3)
-	// Implement the policy rules above and populate the violations slice!
+	// TODO (Group B / Stage 2 - Exercise 3): Implement your policy rules here!
 	// -------------------------------------------------------------------------
-
-	// Starter Example Rule (Replace or expand during your exercise):
-	if facts.ContractValue > 500000.0 {
-		violations = append(violations, fmt.Sprintf("Contract value $%.2f exceeds hard policy cap of $500,000.00", facts.ContractValue))
-	}
-
-	if facts.TermYears > 5 {
-		violations = append(violations, fmt.Sprintf("Term length %d years exceeds 5 year policy maximum", facts.TermYears))
-	}
-
-	if facts.InsuranceAmount < 1000000.0 {
-		violations = append(violations, fmt.Sprintf("Insurance coverage $%.2f is below minimum required $1,000,000.00", facts.InsuranceAmount))
-	}
-
-	if facts.LiabilityCap == "unlimited" {
-		violations = append(violations, "Prohibited clause: Unlimited liability is prohibited by corporate policy")
-	}
-
-	if variance.VarianceFlagged {
-		if variance.LiabilitySpike {
-			violations = append(violations, "Historical Variance Alert: Unprecedented liability clause escalation compared to vendor history")
-		} else {
-			violations = append(violations, fmt.Sprintf("Historical Variance Alert: Contract value is +%.1f%% above historical vendor baseline ($%.2f)", variance.ValueVariancePct, variance.HistoricalAvgValue))
-		}
-	}
-
-	verdict := "PASS"
-	if len(violations) > 0 {
-		verdict = "REVIEW"
-	}
 
 	caseID := facts.CaseID
 	if caseID == "" {
 		caseID = "case-unknown"
 	}
 
-	certHTML := GenerateAuditCertificateHTML(caseID, facts.VendorName, verdict, violations)
+	// Default Exercise Stub Output
+	violations = append(violations, "TODO (Group B / Stage 2 - Exercise 3): Implement policy rules in internal/policy/engine.go")
+
+	certHTML := GenerateAuditCertificateHTML(caseID, facts.VendorName, "REVIEW", violations)
 
 	return PolicyCheckResult{
 		CaseID:          caseID,
-		Status:          "COMPLETED",
-		Verdict:         verdict,
+		Status:          "EXERCISE_STUB",
+		Verdict:         "UNKNOWN",
 		Violations:      violations,
 		CertificateHTML: certHTML,
 	}
