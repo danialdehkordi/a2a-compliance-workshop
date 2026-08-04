@@ -1,6 +1,6 @@
-# Group B Starter: Go Compliance & Governance Agent
+# Group B (Stage 2): Go Compliance & Governance Agent
 
-This repository contains the Group B starter code for the **Enterprise Multi-Agent Compliance Workshop**.
+This repository contains the Group B (Stage 2) starter code for the **Enterprise Multi-Agent Compliance Workshop**.
 
 ## 🚀 Quickstart Local Testing
 
@@ -15,7 +15,7 @@ go run cmd/server/main.go
 bash test_agent.sh
 ```
 
-## 🛠️ Your Workshop Exercises
+## 🛠️ Your Workshop Exercises (Group B / Stage 2)
 
 1. **`TODO 1` ([`internal/agentcard/card.go`](file:///home/user/a2a-compliance-workshop/compliance-governance-agent/internal/agentcard/card.go))**: Serve the A2A Agent Card at `/.well-known/agent.json`.
 2. **`TODO 2` ([`internal/handler/jsonrpc.go`](file:///home/user/a2a-compliance-workshop/compliance-governance-agent/internal/handler/jsonrpc.go))**: Parse incoming A2A `message/send` requests and unmarshal JSON-RPC data.

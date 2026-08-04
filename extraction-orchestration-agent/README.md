@@ -1,6 +1,6 @@
-# Group A Starter: Python ADK Field Extractor & Orchestration Agent
+# Group A (Stage 1): Python ADK Field Extractor & Orchestration Agent
 
-This repository contains the Group A starter code for the **Enterprise Multi-Agent Compliance Workshop**.
+This repository contains the Group A (Stage 1) starter code for the **Enterprise Multi-Agent Compliance Workshop**.
 
 ## 🚀 Quickstart Local Testing
 
@@ -15,7 +15,7 @@ uv run python -m pytest
 USE_A2A_MOCK="true" uv run uvicorn app.main:app --reload --port 8000
 ```
 
-## 🛠️ Your Workshop Exercises
+## 🛠️ Your Workshop Exercises (Group A / Stage 1)
 
 1. **`TODO 1` ([`app/tools.py`](file:///home/user/a2a-compliance-workshop/extraction-orchestration-agent/app/tools.py))**: Implement Gemini 2.0 Pydantic Schema Extractor or RegEx pattern matcher.
 2. **`TODO 2` ([`app/tools.py`](file:///home/user/a2a-compliance-workshop/extraction-orchestration-agent/app/tools.py))**: Calculate percentage variance against SQLite baseline.

@@ -12,8 +12,8 @@ Everything you need for the workshop is contained in this single repository:
 
 ```
 a2a-compliance-workshop/
-├── extraction-orchestration-agent/   <── GROUP A STARTER (Python ADK + Gemini + Looped Learning)
-├── compliance-governance-agent/      <── GROUP B STARTER (Go A2A Agent Card + Policy Engine)
+├── extraction-orchestration-agent/   <── GROUP A / STAGE 1 (Python ADK + Gemini + Field Extractor + Looped Learning)
+├── compliance-governance-agent/      <── GROUP B / STAGE 2 (Go A2A Agent Card + Deterministic Policy Engine)
 ├── cockpit-frontend/                 <── STAGE 3 (Interactive User Review Cockpit UI)
 ├── solutions/                        <── REFERENCE SOLUTIONS (Complete Working Implementations)
 │   ├── extraction-orchestration-agent/
@@ -27,7 +27,7 @@ a2a-compliance-workshop/
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ GROUP A STARTER: extraction-orchestration-agent (Python ADK)                            │
+│ GROUP A (STAGE 1): extraction-orchestration-agent (Python ADK)                          │
 │                                                                                         │
 │  FastAPI Upload Route ──► Gemini Field Extractor ──► Historical Variance Calculator    │
 │                                 │                                                       │
@@ -40,7 +40,7 @@ a2a-compliance-workshop/
                                   │ A2A Payload: POST JSON-RPC 2.0 message/send
                                   ▼
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
-│ GROUP B STARTER: compliance-governance-agent (Go Policy Engine)                         │
+│ GROUP B (STAGE 2): compliance-governance-agent (Go Policy Engine)                       │
 │                                                                                         │
 │  /.well-known/agent.json ──► JSON-RPC 2.0 Handler ──► Deterministic Policy Checker       │
 │                                                            │                            │
@@ -53,10 +53,12 @@ a2a-compliance-workshop/
 
 ## 🛠️ Workshop Hands-On Challenge
 
-* **Group A (Python ADK & Intelligence Team)**:
+* **Group A / Stage 1 (Python ADK & Field Extraction Team)**:
   Work inside `extraction-orchestration-agent/`. Complete `TODO 1` (Contract Fact Extractor), `TODO 2` (Historical Variance Engine), and `TODO 3` (`RemoteA2aAgent` Handoff).
-* **Group B (Go Governance & Policy Team)**:
+* **Group B / Stage 2 (Go Governance & Policy Engine Team)**:
   Work inside `compliance-governance-agent/`. Complete `TODO 1` (A2A Agent Card), `TODO 2` (JSON-RPC Router), and `TODO 3` (Deterministic Policy Engine).
+* **Stage 3 (User Cockpit Dashboard)**:
+  Work inside `cockpit-frontend/`. Connect the UI to Group A's API Gateway.
 * **Solutions**:
   If you get stuck during the hackathon, inspect complete working solutions in `solutions/`.
 
@@ -64,9 +66,9 @@ a2a-compliance-workshop/
 
 ## 🚀 Cloud Deployment Sequence
 
-1. **Stage 1 (Group B Deployment)**:
-   Deploy `compliance-governance-agent` to Gemini Enterprise Agent Platform / Cloud Run. Verify using `bash test_agent.sh`.
-2. **Stage 2 (Group A Deployment)**:
-   Deploy `extraction-orchestration-agent` to Gemini Enterprise Agent Platform / Cloud Run setting `REMOTE_A2A_AGENT_CARD_URL` to Group B's live URL.
+1. **Stage 1 (Group A Deployment)**:
+   Deploy `extraction-orchestration-agent` to Gemini Enterprise Agent Platform / Cloud Run.
+2. **Stage 2 (Group B Deployment)**:
+   Deploy `compliance-governance-agent` to Gemini Enterprise Agent Platform / Cloud Run. Set Group A's `REMOTE_A2A_AGENT_CARD_URL` to Group B's live URL.
 3. **Stage 3 (Frontend Deployment)**:
-   Deploy `cockpit-frontend` pointing to Group A's orchestration API.
+   Deploy `cockpit-frontend` pointing to Group A's live Orchestration API Gateway.
