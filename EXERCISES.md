@@ -117,10 +117,3 @@ Participants split into two parallel engineering teams working in this unified m
 2. Deploy Team B Policy Agent to Cloud Run.
 3. In `cockpit-frontend/index.html`, set `API_ORIGIN` to Team A's Cloud Run URL.
 4. Open the Cockpit UI and run live sample audits!
-
----
-
-### 💡 Note on Reference Solutions
-Full working reference solutions for all exercises are located in the `solutions/` directory:
-- `solutions/extraction-orchestration-agent/`
-- `solutions/compliance-governance-agent/`
