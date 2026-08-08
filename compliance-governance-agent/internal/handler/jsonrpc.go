@@ -1,14 +1,6 @@
 /*
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group B (Stage 2) - Go JSON-RPC 2.0 Router
-===============================================================================
-Welcome Group B Developers!
-
-Your hands-on mission in this file:
-  • Exercise 2: Parse incoming A2A `message/send` requests and extract facts & variance data.
-
-Complete working solutions are available in:
-  `solutions/compliance-governance-agent/internal/handler/jsonrpc.go`
+🏛️ STAGE 2 IMPLEMENTATION: Group B - Go JSON-RPC 2.0 Router
 ===============================================================================
 */
 
@@ -48,18 +40,6 @@ type A2AMessage struct {
 	} `json:"message"`
 }
 
-/*
-===========================================================================
-TODO (Group B / Stage 2 - Exercise 2): Process A2A JSON-RPC `message/send` Requests
-===========================================================================
-Steps to implement:
-  1. Decode JSON-RPC request and verify method == "message/send".
-  2. Unmarshal `req.Params` into `msg A2AMessage`.
-  3. Extract `facts` and `variance` from `msg.Message.Parts[0].Data`.
-  4. Call `result := policy.EvaluateContractPolicy(facts, variance)`.
-  5. Return JSON-RPC response with `result`.
-===========================================================================
-*/
 func HandleJSONRPC() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -87,10 +67,6 @@ func HandleJSONRPC() http.HandlerFunc {
 			return
 		}
 
-		// -------------------------------------------------------------------------
-		// TODO (Group B - Exercise 2): Unmarshal A2AMessage params, extract facts
-		// & variance, and invoke EvaluateContractPolicy here!
-		// -------------------------------------------------------------------------
 		var msg A2AMessage
 		if err := json.Unmarshal(req.Params, &msg); err != nil {
 			res := JSONRPCResponse{

@@ -2391,7 +2391,9 @@
       let networkLatencyVal = 1.5;
       let pollingInterval = null;
       let lastTickerMessage = "";
-      const API_ORIGIN = window.location.protocol === "file:" ? "http://127.0.0.1:8000" : "";
+      const API_ORIGIN = (window.location.origin.includes("cockpit-frontend") || window.location.origin.includes("run.app"))
+        ? "https://extraction-orchestration-agent-121116282931.europe-west3.run.app"
+        : (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : "");
 
       function apiUrl(path) {
         const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -2872,7 +2874,7 @@
           }
           
           // Show artifacts previews
-          if (caseData.artifacts.length > 0) {
+          if (caseData.artifacts && caseData.artifacts.length > 0) {
             document.getElementById("viewport-empty-box").style.display = "none";
             document.getElementById("artifact-frame").style.display = "block";
             switchStageTab("cert"); // default show cert
@@ -2883,7 +2885,7 @@
         const list = document.getElementById("events-stream-list");
         list.replaceChildren(); // Safe clean empty
         
-        caseData.events.forEach(ev => {
+        (caseData.events || []).forEach(ev => {
           const row = document.createElement("div");
           row.className = "event-row";
           

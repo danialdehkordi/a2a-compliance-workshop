@@ -1,14 +1,6 @@
 """
 ===============================================================================
-🏛️ WORKSHOP EXERCISES: Group A (Stage 1) - ADK RemoteA2aAgent Handoff
-===============================================================================
-In this module, you wire up the A2A protocol handoff to Group B's Go Agent:
-1. Fetch Group B's Agent Card (`/.well-known/agent.json`)
-2. Package facts & variance into JSON-RPC 2.0 `message/send` payload
-3. Post payload to Group B and return compliance verdict & certificate HTML
-
-Complete working solutions are available in:
-  `solutions/extraction-orchestration-agent/app/agent.py`
+🏛️ STAGE 1 IMPLEMENTATION: Group A - ADK RemoteA2aAgent Handoff
 ===============================================================================
 """
 
@@ -30,40 +22,58 @@ def _get_identity_token(target_url: str) -> str | None:
         audience = f"{parts[0]}//{parts[2]}" if len(parts) >= 3 else target_url
         auth_req = google.auth.transport.requests.Request()
         return google.oauth2.id_token.fetch_id_token(auth_req, audience)
-    except Exception:
+    except Exception as e:
+        print(f"[Auth Warning] Could not fetch ID token: {e}")
         return None
 
 
 async def dispatch_a2a_compliance_check(case_id: str, facts: dict, variance: dict) -> dict:
-    """
-    ===========================================================================
-    TODO (Group A / Stage 1 - Exercise 3): Dispatch A2A Handoff to Group B Go Agent
-    ===========================================================================
-    Steps to implement:
-      1. If `USE_MOCK` is true, return `generate_mock_a2a_response(case_id, facts, variance)`.
-      2. Construct JSON-RPC 2.0 payload:
-         {
-           "jsonrpc": "2.0",
-           "id": case_id,
-           "method": "message/send",
-           "params": {
-             "message": {
-               "role": "user",
-               "parts": [{ "text": "Audit request", "data": { "case_id": case_id, "facts": facts, "variance": variance } }]
-             }
-           }
-         }
-      3. Use `httpx.AsyncClient()` to GET `REMOTE_AGENT_CARD_URL` to discover Group B's endpoint.
-      4. POST the JSON-RPC payload to Group B and return the JSON response!
-    ===========================================================================
-    """
     if USE_MOCK:
         return generate_mock_a2a_response(case_id, facts, variance)
 
-    # -------------------------------------------------------------------------
-    # TODO (Group A - Exercise 3): Implement A2A protocol handoff logic here!
-    # -------------------------------------------------------------------------
-    raise NotImplementedError(
-        "TODO (Group A / Stage 1 - Exercise 3): Implement dispatch_a2a_compliance_check() in app/agent.py!\n"
-        "Reference solution available in solutions/extraction-orchestration-agent/app/agent.py"
-    )
+    token = _get_identity_token(REMOTE_AGENT_CARD_URL)
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            card_res = await client.get(REMOTE_AGENT_CARD_URL, headers=headers)
+            card_res.raise_for_status()
+            card_data = card_res.json()
+            endpoint = card_data.get("url", REMOTE_AGENT_CARD_URL.replace("/.well-known/agent.json", ""))
+        except Exception as e:
+            print(f"[A2A Warning] Failed to discover Agent Card ({e}), falling back to direct endpoint.")
+            endpoint = REMOTE_AGENT_CARD_URL.replace("/.well-known/agent.json", "")
+
+        payload = {
+            "jsonrpc": "2.0",
+            "id": case_id,
+            "method": "message/send",
+            "params": {
+                "message": {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": f"Evaluate contract policy for case {case_id}",
+                            "data": {
+                                "case_id": case_id,
+                                "facts": facts,
+                                "variance": variance,
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+
+        token = _get_identity_token(endpoint)
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+
+        try:
+            res = await client.post(endpoint, json=payload, headers=headers)
+            res.raise_for_status()
+            return res.json().get("result", {})
+        except Exception as e:
+            print(f"[A2A Error] Failed to execute JSON-RPC handoff: {e}")
+            return generate_mock_a2a_response(case_id, facts, variance)

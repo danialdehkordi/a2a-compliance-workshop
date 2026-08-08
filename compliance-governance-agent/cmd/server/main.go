@@ -24,14 +24,19 @@ func main() {
 	mux := http.NewServeMux()
 
 	// A2A Agent Card Discovery Route
-	agentCardURL := fmt.Sprintf("%s/.well-known/agent.json", baseURL)
-	mux.HandleFunc("/.well-known/agent.json", agentcard.HandleAgentCard(agentCardURL))
+	mux.HandleFunc("/.well-known/agent.json", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			agentcard.HandleAgentCard(baseURL)(w, r)
+		} else {
+			handler.HandleJSONRPC()(w, r)
+		}
+	})
 
 	// A2A JSON-RPC Message Router
 	mux.HandleFunc("/", handler.HandleJSONRPC())
 
 	log.Printf("🚀 Compliance Governance Agent (Go) listening on port %s", port)
-	log.Printf("📌 Agent Card URL: %s", agentCardURL)
+	log.Printf("📌 Root Base URL: %s", baseURL)
 
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatalf("Server error: %v", err)
