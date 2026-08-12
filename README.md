@@ -1,90 +1,51 @@
-# 🏛️ Enterprise Multi-Agent A2A Compliance Workshop
+# 🏛️ Enterprise Contract Compliance Application
 
-Welcome to the hands-on repository for the **Enterprise Multi-Agent Compliance Workshop**.
+An end-to-end, multi-agent AI system designed to automate legal contract ingestion, risk analysis, historical price variance detection, and deterministic policy governance on **Google Cloud**.
 
-This repository demonstrates how to build, test, and deploy a production-grade **Contract Compliance Application** on Google Cloud and **Gemini Enterprise Agent Platform** using two autonomous engineering teams.
+---
+
+## 🎯 What This Application Does
+
+Enterprise procurement teams process thousands of vendor contracts annually. Manually reviewing contract terms, identifying liability risks, and enforcing internal spending limits is time-consuming and error-prone.
+
+This application provides an **automated multi-agent compliance pipeline**:
+
+1. **📄 Document Ingestion**: Ingests vendor contracts in PDF or text format from local uploads or Cloud Storage vaults.
+2. **🧠 AI Legal Fact Extraction**: Uses Gemini AI on **Gemini Enterprise Agent Platform** to automatically extract key legal parameters—including vendor name, contract value, term duration, liability clauses, and insurance floors.
+3. **📊 Historical Variance Detection**: Compares contract pricing against historical vendor benchmarks to flag anomalous price spikes (+15% threshold).
+4. **🛡️ Autonomous A2A Policy Governance**: Hands off extracted parameters via the **Agent-to-Agent (A2A) Protocol** (JSON-RPC 2.0) to an independent, deterministic Policy Engine in Go that evaluates hard compliance rules ($500k value cap, 5-year max term) and generates an official **Governance Audit Certificate**.
+5. **🖥️ Operations Review Portal**: Displays real-time case states, extracted parameter sheets, distributed trace timelines, and audit certificates for procurement review.
+
+---
+
+## 📐 High-Level Application Workflow
+
+![High-Level Application Workflow](Workflow.jpg)
+
+> 📄 **Looking for deep technical details?**  
+> For full sequence diagrams, service endpoints, A2A JSON-RPC protocol schemas, and OpenTelemetry trace specifications, see [**`ARCHITECTURE.md`**](ARCHITECTURE.md).
 
 ---
 
 ## 📁 Monorepo Structure
 
 ```text
-a2a-compliance-workshop/
-├── extraction-orchestration-agent/   <── GROUP A / STAGE 1 (Python ADK + Gemini 2.5 + Gateway)
-├── compliance-governance-agent/      <── GROUP B / STAGE 2 (Go A2A Agent Card + Policy Engine)
-├── cockpit-frontend/                 <── STAGE 3 (Interactive User Review Cockpit UI)
-├── EXERCISES.md                      <── Hands-on exercise guide & TODOs for Teams A & B
-├── ARCHITECTURE.md                   <── Full system architecture & sequence flow
-└── README.md                         <── Master Workshop Guide
+a2a-contract-compliance/
+├── extraction-orchestration-agent/   <── Python ADK Agent & FastAPI Gateway (Gemini 2.5 + Agent Platform)
+├── compliance-governance-agent/      <── Go Deterministic Policy Engine (A2A Agent Card + Policy Engine)
+├── cockpit-frontend/                 <── Interactive Operations Review Portal Dashboard UI
+├── EXERCISES.md                      <── Workshop exercise guide & TODOs for Teams A & B
+├── ARCHITECTURE.md                   <── Full system architecture & sequence flow diagrams
+└── README.md                         <── Application Overview & Guide
 ```
 
 ---
 
-## 🎯 System Architecture & Component Diagram
+## 🛠️ Workshop & Exercise Guides
 
-```mermaid
-graph TB
-    subgraph S1 ["STAGE 1: DASHBOARD UI"]
-        FE["cockpit-frontend"]
-    end
+This codebase is organized for two collaborative engineering teams:
 
-    subgraph S2 ["STAGE 2: INTAKE GATEWAY"]
-        GW["extraction-orchestration-agent"]
-    end
+* **Team A (Python ADK & Agent Platform)**: Focuses on legal fact extraction, historical vendor database variance, and A2A dispatch in `extraction-orchestration-agent/`.
+* **Team B (Go Governance Engine)**: Focuses on A2A Agent Card discovery, deterministic policy enforcement ($500k cap, 5-yr term cap), and certificate rendering in `compliance-governance-agent/`.
 
-    subgraph S3 ["STAGE 3: GEMINI AI ORCHESTRATOR"]
-        RE["Enterprise Compliance Orchestrator"]
-    end
-
-    subgraph S4 ["STAGE 4: GO GOVERNANCE ENGINE"]
-        GO["compliance-governance-agent"]
-    end
-
-    %% Flow Steps
-    FE -->|"1. Upload Contract PDF/Text"| GW
-    GW -->|"2. Invoke AI Reasoning Engine"| RE
-    RE -->|"3. Fetch Agent Card /.well-known/agent.json"| GO
-    RE -->|"4. Send A2A JSON-RPC 2.0 Payload"| GO
-    GO -->|"5. Return Verdict & Audit Certificate"| RE
-    RE -->|"6. Return Case & Extracted Facts"| GW
-    GW -->|"7. Render Results & Trace Spans"| FE
-
-    %% Styling
-    classDef feStyle fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#ffffff;
-    classDef gwStyle fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#ffffff;
-    classDef reStyle fill:#1e1b4b,stroke:#a78bfa,stroke-width:2px,color:#ffffff;
-    classDef goStyle fill:#111827,stroke:#f59e0b,stroke-width:2px,color:#ffffff;
-
-    class FE feStyle;
-    class GW gwStyle;
-    class RE reStyle;
-    class GO goStyle;
-```
-
-> 📄 For complete service mappings, sequence diagrams, and protocol specifications, see [**`ARCHITECTURE.md`**](ARCHITECTURE.md).
-
----
-
-## 🛠️ Workshop Hands-On Exercises
-
-See [**`EXERCISES.md`**](EXERCISES.md) for detailed exercise breakdowns and tasks:
-
-* **Team A (Python ADK & Agent Platform)**:
-  Work inside `extraction-orchestration-agent/`. Implement Gemini 2.5 fact extraction (`tools.py`), historical variance calculation, A2A JSON-RPC dispatch (`agent.py`), and deploy as a Vertex AI Reasoning Engine on Gemini Enterprise Agent Platform (`deploy_to_agent_platform.py`).
-
-* **Team B (Go Governance & Policy Engine)**:
-  Work inside `compliance-governance-agent/`. Implement the A2A Agent Card endpoint (`card.go`), JSON-RPC 2.0 router (`jsonrpc.go`), 100% deterministic policy engine ($500k value cap, 5-year max term in `engine.go`), and containerize via Dockerfile.
-
-* **Joint Integration (User Cockpit Dashboard)**:
-  Work inside `cockpit-frontend/`. Connect the UI to Team A's live Cloud Run gateway URL and run end-to-end contract compliance audits!
-
----
-
-## 🚀 Cloud Deployment Sequence
-
-1. **Stage 1 (Team A Deployment)**:
-   Deploy `extraction-orchestration-agent` to Gemini Enterprise Agent Platform / Cloud Run in `europe-west3`.
-2. **Stage 2 (Team B Deployment)**:
-   Deploy `compliance-governance-agent` to Cloud Run in `europe-west3`. Set Team A's `REMOTE_A2A_AGENT_CARD_URL` to Team B's live URL (`/.well-known/agent.json`).
-3. **Stage 3 (Frontend Deployment)**:
-   Deploy `cockpit-frontend` to Cloud Run, pointing `API_ORIGIN` to Team A's live Orchestration Gateway.
+See [**`EXERCISES.md`**](EXERCISES.md) for step-by-step exercise questions and tasks.
