@@ -239,22 +239,158 @@ async def get_case_artifact(case_id: str, artifact_id: str):
     if artifact_id == "parameters-sheet":
         facts = case.get("extracted_facts", {})
         variance = case.get("historical_variance", {})
-        html = f"""
-        <html style="background:#0f172a; color:#e2e8f0; font-family:sans-serif; padding:16px;">
-            <h3 style="color:#38bdf8; margin-top:0;">📋 Extracted Contract Parameters & Historical Variance</h3>
-            <p style="font-size:0.85rem; color:#94a3b8;"><strong>GE Agent Platform Engine:</strong> <code>{REASONING_ENGINE_ID}</code></p>
-            <table style="width:100%; border-collapse:collapse; background:#1e293b; border-radius:8px; overflow:hidden;">
-                <tr style="border-bottom:1px solid #334155;"><th style="padding:10px; text-align:left;">Field</th><th style="padding:10px; text-align:left;">Extracted Value</th></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Vendor Name</td><td style="padding:10px; font-weight:bold;">{facts.get('vendor_name', 'N/A')}</td></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Contract Value</td><td style="padding:10px; font-weight:bold;">${facts.get('contract_value', 0):,.2f}</td></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Term Length</td><td style="padding:10px; font-weight:bold;">{facts.get('term_years', 0)} years</td></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Liability Limit</td><td style="padding:10px; font-weight:bold;">{facts.get('liability_cap', 'N/A')}</td></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Insurance Minimum</td><td style="padding:10px; font-weight:bold;">${facts.get('insurance_amount', 0):,.2f}</td></tr>
-                <tr style="border-bottom:1px solid #334155;"><td style="padding:10px;">Historical Avg Value</td><td style="padding:10px; font-weight:bold;">${variance.get('historical_avg_value', 0):,.2f}</td></tr>
-                <tr><td style="padding:10px;">Historical Variance %</td><td style="padding:10px; font-weight:bold; color:{'#f87171' if variance.get('variance_flagged') else '#4ade80'};">{variance.get('value_variance_pct', 0)}%</td></tr>
-            </table>
-        </html>
-        """
+        risk_tier = "LOW" if case.get("passed") else "HIGH"
+        variance_flagged = variance.get("variance_flagged", False)
+        
+        html = f"""<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Parameter Sheet - {facts.get('vendor_name', 'Vendor')}</title>
+    <style>
+      :root {{
+        --bg: #121212;
+        --card: #181818;
+        --card-soft: #1f1f1f;
+        --ink: #ffffff;
+        --muted: #b3b3b3;
+        --quiet: #7c7c7c;
+        --line: #4d4d4d;
+        --success: #1ed760;
+        --error: #f3727f;
+        --amber: #ffa42b;
+        --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
+        --shadow-card: rgba(0, 0, 0, 0.3) 0px 8px 8px;
+        --font-title: SpotifyMixUITitle, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --font-ui: SpotifyMixUI, "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }}
+      body {{
+        margin: 0;
+        padding: 24px 16px;
+        color: var(--ink);
+        font-family: var(--font-ui);
+        background: var(--bg);
+      }}
+      main {{
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 28px 24px;
+        border-radius: 8px;
+        background: var(--card);
+        box-shadow: var(--shadow-heavy);
+      }}
+      header {{
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+      }}
+      h1 {{
+        margin: 0 0 4px;
+        font-family: var(--font-title);
+        font-size: 20px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+      }}
+      h2 {{
+        margin: 20px 0 10px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--quiet);
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 6px;
+      }}
+      p {{
+        margin: 0;
+        font-size: 12px;
+        color: var(--muted);
+      }}
+      .meta {{
+        font-size: 11px;
+        color: var(--quiet);
+        text-align: right;
+        font-family: monospace;
+      }}
+      .grid {{
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        margin: 14px 0;
+      }}
+      .item {{
+        padding: 12px;
+        background: var(--card-soft);
+        border-radius: 6px;
+        border: 1px solid var(--line);
+      }}
+      .item span {{
+        display: block;
+        color: var(--quiet);
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }}
+      .item strong {{
+        display: block;
+        font-size: 14px;
+        color: var(--ink);
+      }}
+      .badge {{
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 99px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }}
+      .badge.low {{ background: rgba(30, 215, 96, 0.15); color: var(--success); border: 1px solid var(--success); }}
+      .badge.high {{ background: rgba(243, 114, 127, 0.15); color: var(--error); border: 1px solid var(--error); }}
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>Legal Ingestion Parameter Sheet</h1>
+          <p>Extracted variables by Gemini Enterprise Agent Platform (Reasoning Engine).</p>
+        </div>
+        <div class="meta">
+          Case: {case_id[:8]}<br />
+          File: {case.get('filename', 'contract.pdf')}
+        </div>
+      </header>
+      
+      <h2>Core Parameters</h2>
+      <section class="grid">
+        <div class="item"><span>Contractor / Vendor</span><strong>{facts.get('vendor_name', 'N/A')}</strong></div>
+        <div class="item"><span>Total Contract Value</span><strong>${facts.get('contract_value', 0):,.2f}</strong></div>
+        <div class="item"><span>Contract Duration</span><strong>{facts.get('term_years', 0)} year(s)</strong></div>
+        <div class="item"><span>Liability Capping</span><strong>{facts.get('liability_cap', 'N/A')}</strong></div>
+        <div class="item"><span>Insurance Minimum</span><strong>${facts.get('insurance_amount', 0):,.2f}</strong></div>
+        <div class="item"><span>Historical Avg Value</span><strong>${variance.get('historical_avg_value', 0):,.2f}</strong></div>
+      </section>
+      
+      <h2>Risk & Variance Diagnostics</h2>
+      <div class="grid">
+        <div class="item">
+          <span>Evaluated Risk Level</span>
+          <span class="badge {risk_tier.lower()}">{risk_tier} Legal Risk</span>
+        </div>
+        <div class="item">
+          <span>Historical Variance %%</span>
+          <strong style="color: {'var(--error)' if variance_flagged else 'var(--success)'};">{variance.get('value_variance_pct', 0)}%% {'(Alert Flagged)' if variance_flagged else '(Normal)'}</strong>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>"""
         return HTMLResponse(content=html)
     else:
         cert_html = case.get("certificate_html", "<h3>No Certificate Generated</h3>")

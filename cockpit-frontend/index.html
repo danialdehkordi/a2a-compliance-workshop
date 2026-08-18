@@ -1424,7 +1424,7 @@
 
       /* UX layout pass: left-to-right audit cockpit with diagnostics below. */
       .workspace-grid {
-        grid-template-columns: minmax(320px, 360px) minmax(520px, 1fr) minmax(360px, 400px);
+        grid-template-columns: minmax(320px, 360px) minmax(460px, 1.2fr) minmax(360px, 1fr);
         grid-template-areas:
           "ops stage exchange"
           "controls controls controls";
@@ -1435,14 +1435,14 @@
       .operations-desk,
       .stage-panel,
       .engine-monitor {
-        min-height: clamp(580px, calc(100vh - 280px), 660px);
-        height: clamp(580px, calc(100vh - 280px), 660px);
+        min-height: clamp(580px, calc(100vh - 280px), 720px);
+        height: auto;
       }
 
       .operations-desk {
         grid-area: ops;
         gap: 16px;
-        overflow: auto;
+        overflow: visible;
       }
 
       .stage-panel {
@@ -1473,7 +1473,7 @@
         min-height: 0;
         padding: 20px;
         gap: 14px;
-        overflow: hidden;
+        overflow: visible;
       }
 
       .engine-monitor-header {
@@ -1555,20 +1555,18 @@
       }
 
       .engine-monitor .handoff-agent {
-        min-height: 96px;
+        min-height: 88px;
+        height: auto;
       }
 
       .engine-monitor .handoff-agent strong {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .engine-monitor .handoff-agent small {
-        display: -webkit-box;
-        overflow: hidden;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .engine-monitor .handoff-arrow {
@@ -1583,8 +1581,9 @@
 
       .engine-monitor .payload-preview {
         flex: 1;
-        max-height: none;
-        min-height: 160px;
+        max-height: 220px;
+        min-height: 140px;
+        overflow-y: auto;
       }
 
       .test-controls-panel {
