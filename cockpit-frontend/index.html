@@ -721,10 +721,21 @@
       .handoff-arrow {
         color: var(--color-primary);
         font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         text-align: center;
-        min-width: 66px;
+        width: 72px;
+        flex-shrink: 0;
+        padding: 4px 6px;
+        background: var(--color-card);
+        border: 1px dashed var(--color-border);
+        border-radius: var(--rounded-sm);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        line-height: 1.2;
       }
 
       .handoff-grid {
@@ -2716,7 +2727,11 @@
 
         document.getElementById("handoff-source").textContent = handoff.source_agent || "python-extraction-agent";
         document.getElementById("handoff-target").textContent = agentCard.name || handoff.target_agent || "go-compliance-agent";
-        document.getElementById("handoff-method").textContent = handoff.method || "SendMessage";
+        let displayMethod = handoff.method || "SendMessage";
+        if (displayMethod.includes("message/send")) {
+          displayMethod = "message/send";
+        }
+        document.getElementById("handoff-method").textContent = displayMethod;
         document.getElementById("handoff-card-url").textContent = "GET " + (handoff.agent_card_url || "http://localhost:8888/.well-known/agent.json");
         document.getElementById("handoff-task-id").textContent = handoff.task_id.substring(0, 8) + "...";
 
