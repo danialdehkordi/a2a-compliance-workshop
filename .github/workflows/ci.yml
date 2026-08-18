@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD Pipeline & Cloud Run Deployment
 
 on:
   push:
@@ -7,14 +7,117 @@ on:
     branches: [ main, master ]
 
 concurrency:
-  group: Create Repo on Approve-refs/heads/main
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  GCP_PROJECT: mcp-lud-wew
+  GCP_REGION: europe-west3
+
 jobs:
-  build:
+  # ---------------------------------------------------------------------------
+  # Step 1: Detect which container services have file changes
+  # ---------------------------------------------------------------------------
+  changes:
+    name: Detect Changed Containers
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      extraction: ${{ steps.filter.outputs.extraction }}
+      governance: ${{ steps.filter.outputs.governance }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build & Test
-        run: echo "Repository initialized with 15m timeout and concurrency cancellation guardrails."
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'cockpit-frontend/**'
+            extraction:
+              - 'extraction-orchestration-agent/**'
+            governance:
+              - 'compliance-governance-agent/**'
+
+  # ---------------------------------------------------------------------------
+  # Step 2: Deploy cockpit-frontend (only if frontend files changed)
+  # ---------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Cockpit Frontend
+    needs: changes
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run (cockpit-frontend)
+        run: |
+          gcloud run deploy cockpit-frontend \
+            --source ./cockpit-frontend \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT }} \
+            --allow-unauthenticated \
+            --quiet
+
+  # ---------------------------------------------------------------------------
+  # Step 3: Deploy extraction-orchestration-agent (only if python agent changed)
+  # ---------------------------------------------------------------------------
+  deploy-extraction:
+    name: Deploy Extraction Orchestrator
+    needs: changes
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.extraction == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run (extraction-orchestration-agent)
+        run: |
+          gcloud run deploy extraction-orchestration-agent \
+            --source ./extraction-orchestration-agent \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT }} \
+            --allow-unauthenticated \
+            --quiet
+
+  # ---------------------------------------------------------------------------
+  # Step 4: Deploy compliance-governance-agent (only if go agent changed)
+  # ---------------------------------------------------------------------------
+  deploy-governance:
+    name: Deploy Go Governance Agent
+    needs: changes
+    if: github.ref == 'refs/heads/main' && needs.changes.outputs.governance == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy to Cloud Run (compliance-governance-agent)
+        run: |
+          gcloud run deploy compliance-governance-agent \
+            --source ./compliance-governance-agent \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT }} \
+            --allow-unauthenticated \
+            --quiet
