@@ -411,6 +411,7 @@ async def get_case_artifact(case_id: str, artifact_id: str):
       </ul>
     </main>
   </body>
+</html>"""
         return HTMLResponse(content=html)
     else:
         cert_html = case.get("certificate_html", "<h3>No Certificate Generated</h3>")
