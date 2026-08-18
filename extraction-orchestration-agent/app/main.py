@@ -240,7 +240,20 @@ async def get_case_artifact(case_id: str, artifact_id: str):
         facts = case.get("extracted_facts", {})
         variance = case.get("historical_variance", {})
         risk_tier = "LOW" if case.get("passed") else "HIGH"
-        variance_flagged = variance.get("variance_flagged", False)
+        
+        factors = []
+        if facts.get("liability_limit") == "UNLIMITED":
+            factors.append("Unlimited liability exposure detected in contract clauses.")
+        if facts.get("term_length_years", 1) > 5:
+            factors.append(f"Contract duration ({facts.get('term_length_years')} years) exceeds standard 5-year maximum.")
+        if facts.get("contract_value", 0) > 500000:
+            factors.append(f"Contract value (${facts.get('contract_value', 0):,.2f}) exceeds $500,000 threshold.")
+        if variance.get("variance_flagged"):
+            factors.append(f"Pricing variance anomaly: {variance.get('price_variance_pct', 0):+.1f}% vs historical benchmark.")
+        if not factors:
+            factors.append("All primary legal metrics within acceptable bounds.")
+
+        factors_li = "".join([f"<li><strong>{f}</strong></li>" for f in factors])
         
         html = f"""<!doctype html>
 <html lang="en">
@@ -257,101 +270,109 @@ async def get_case_artifact(case_id: str, artifact_id: str):
         --muted: #b3b3b3;
         --quiet: #7c7c7c;
         --line: #4d4d4d;
-        --success: #1ed760;
+        --accent: #1ed760;
+        --accent-hover: #1db954;
         --error: #f3727f;
         --amber: #ffa42b;
         --shadow-heavy: rgba(0, 0, 0, 0.5) 0px 8px 24px;
         --shadow-card: rgba(0, 0, 0, 0.3) 0px 8px 8px;
-        --font-title: SpotifyMixUITitle, "Helvetica Neue", Helvetica, Arial, sans-serif;
-        --font-ui: SpotifyMixUI, "Helvetica Neue", Helvetica, Arial, sans-serif;
+        --shadow-inset: rgb(18, 18, 18) 0px 1px 0px, rgb(124, 124, 124) 0px 0px 0px 1px inset;
+        --font-title: SpotifyMixUITitle, CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, "MS Gothic", sans-serif;
+        --font-ui: SpotifyMixUI, CircularSp-Arab, CircularSp-Hebr, CircularSp-Cyrl, CircularSp-Grek, CircularSp-Deva, "Helvetica Neue", Helvetica, Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", Meiryo, "MS Gothic", sans-serif;
       }}
       body {{
         margin: 0;
-        padding: 24px 16px;
+        padding: clamp(14px, 4vw, 34px);
         color: var(--ink);
         font-family: var(--font-ui);
         background: var(--bg);
       }}
       main {{
-        max-width: 720px;
+        max-width: 800px;
         margin: 0 auto;
-        padding: 28px 24px;
+        padding: clamp(20px, 4vw, 30px);
+        border: 0;
         border-radius: 8px;
         background: var(--card);
         box-shadow: var(--shadow-heavy);
       }}
       header {{
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: flex-start;
+        gap: 20px;
         border-bottom: 1px solid var(--line);
-        padding-bottom: 14px;
-        margin-bottom: 18px;
+        padding-bottom: 18px;
+        margin-bottom: 24px;
       }}
       h1 {{
-        margin: 0 0 4px;
+        margin: 0;
         font-family: var(--font-title);
-        font-size: 20px;
+        font-size: 24px;
         font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
+        line-height: 1.18;
       }}
       h2 {{
-        margin: 20px 0 10px;
-        font-size: 13px;
+        margin: 24px 0 10px;
+        font-size: 14px;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: var(--quiet);
-        border-bottom: 1px solid var(--line);
-        padding-bottom: 6px;
+        letter-spacing: 1.4px;
+        color: var(--ink);
       }}
-      p {{
-        margin: 0;
-        font-size: 12px;
+      p, li {{
+        font-size: 14px;
+        line-height: 1.5;
         color: var(--muted);
       }}
+      ul {{
+        padding-left: 20px;
+        margin: 0;
+      }}
       .meta {{
-        font-size: 11px;
         color: var(--quiet);
-        text-align: right;
         font-family: monospace;
+        font-size: 11px;
+        text-align: right;
       }}
       .grid {{
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        margin: 14px 0;
+        gap: 12px;
+        margin: 18px 0;
       }}
       .item {{
+        border: 0;
         padding: 12px;
         background: var(--card-soft);
-        border-radius: 6px;
-        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow-inset);
       }}
       .item span {{
         display: block;
         color: var(--quiet);
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.4px;
         margin-bottom: 4px;
       }}
       .item strong {{
         display: block;
-        font-size: 14px;
-        color: var(--ink);
+        font-size: 16px;
       }}
       .badge {{
         display: inline-block;
-        padding: 4px 10px;
+        padding: 4px 8px;
         border-radius: 99px;
-        font-size: 11px;
-        font-weight: 700;
+        font-size: 10.5px;
+        font-weight: 600;
         text-transform: uppercase;
+        border: 1px solid currentColor;
       }}
-      .badge.low {{ background: rgba(30, 215, 96, 0.15); color: var(--success); border: 1px solid var(--success); }}
-      .badge.high {{ background: rgba(243, 114, 127, 0.15); color: var(--error); border: 1px solid var(--error); }}
+      .badge.high {{ background: transparent; color: var(--error); }}
+      .badge.medium {{ background: transparent; color: var(--amber); }}
+      .badge.low {{ background: transparent; color: var(--accent); }}
     </style>
   </head>
   <body>
@@ -359,38 +380,37 @@ async def get_case_artifact(case_id: str, artifact_id: str):
       <header>
         <div>
           <h1>Legal Ingestion Parameter Sheet</h1>
-          <p>Extracted variables by Gemini Enterprise Agent Platform (Reasoning Engine).</p>
+          <p>Extracted variables from raw document text by Extractor Specialist subagent.</p>
         </div>
         <div class="meta">
           Case: {case_id[:8]}<br />
-          File: {case.get('filename', 'contract.pdf')}
+          Ingested: {case.get('filename', 'contract.pdf')}
         </div>
       </header>
       
       <h2>Core Parameters</h2>
       <section class="grid">
-        <div class="item"><span>Contractor / Vendor</span><strong>{facts.get('vendor_name', 'N/A')}</strong></div>
-        <div class="item"><span>Total Contract Value</span><strong>${facts.get('contract_value', 0):,.2f}</strong></div>
-        <div class="item"><span>Contract Duration</span><strong>{facts.get('term_years', 0)} year(s)</strong></div>
-        <div class="item"><span>Liability Capping</span><strong>{facts.get('liability_cap', 'N/A')}</strong></div>
-        <div class="item"><span>Insurance Minimum</span><strong>${facts.get('insurance_amount', 0):,.2f}</strong></div>
-        <div class="item"><span>Historical Avg Value</span><strong>${variance.get('historical_avg_value', 0):,.2f}</strong></div>
+        <div class="item"><span>Contractor / Vendor</span><strong>{facts.get("vendor_name", "N/A")}</strong></div>
+        <div class="item"><span>Client Entity</span><strong>{facts.get("client_name", "N/A")}</strong></div>
+        <div class="item"><span>Total Contract Value</span><strong>${facts.get("contract_value", 0.0):,.2f}</strong></div>
+        <div class="item"><span>Contract Duration</span><strong>{facts.get("term_length_years", 1)} year(s) ({facts.get("start_date", "")} to {facts.get("end_date", "")})</strong></div>
+        <div class="item"><span>Liability Capping Limits</span><strong>{facts.get("liability_limit", "N/A")}</strong></div>
+        <div class="item"><span>Commercial Insurance Coverage</span><strong>${facts.get("insurance_coverage", 0.0):,.2f}</strong></div>
+        <div class="item"><span>Auto-Renewal Trigger</span><strong>{ "Yes (Auto-renewal enabled)" if facts.get("auto_renewal") else "No (Term terminates cleanly)" }</strong></div>
+        <div class="item"><span>Exit Notices Safety</span><strong>{ "Termination Safety Clause exists" if facts.get("has_termination_clause") else "None (Missing standard exit notices!)" }</strong></div>
       </section>
       
-      <h2>Risk & Variance Diagnostics</h2>
-      <div class="grid">
-        <div class="item">
-          <span>Evaluated Risk Level</span>
-          <span class="badge {risk_tier.lower()}">{risk_tier} Legal Risk</span>
-        </div>
-        <div class="item">
-          <span>Historical Variance %%</span>
-          <strong style="color: {'var(--error)' if variance_flagged else 'var(--success)'};">{variance.get('value_variance_pct', 0)}%% {'(Alert Flagged)' if variance_flagged else '(Normal)'}</strong>
-        </div>
+      <h2>Specialist Risk Diagnostics</h2>
+      <div class="item" style="margin-bottom: 12px;">
+        <span style="margin-bottom: 6px;">Evaluated Risk Level Bounds</span>
+        <span class="badge {risk_tier.lower()}">{risk_tier} Legal Risk</span>
       </div>
+      <h2>Key Risk Indicators (KRIs)</h2>
+      <ul>
+        {factors_li}
+      </ul>
     </main>
   </body>
-</html>"""
         return HTMLResponse(content=html)
     else:
         cert_html = case.get("certificate_html", "<h3>No Certificate Generated</h3>")
