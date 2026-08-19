@@ -48,4 +48,8 @@ This codebase is organized for two collaborative engineering teams:
 * **Team A (Python ADK & Agent Platform)**: Focuses on legal fact extraction, historical vendor database variance, and A2A dispatch in `extraction-orchestration-agent/`.
 * **Team B (Go Governance Engine)**: Focuses on A2A Agent Card discovery, deterministic policy enforcement ($500k cap, 5-yr term cap), and certificate rendering in `compliance-governance-agent/`.
 
-See [**`EXERCISES.md`**](EXERCISES.md) for step-by-step exercise questions and tasks.
+### 📚 Documentation & Guides
+- [**`DEMO_GUIDE.md`**](DEMO_GUIDE.md): Complete executive pitch, 5-step demo flow, code highlights, and Q&A cheat sheet.
+- [**`TUTORIAL.md`**](TUTORIAL.md): Step-by-step 6-phase workshop playbook and intent-driven coding agent prompts.
+- [**`EXERCISES.md`**](EXERCISES.md): Hands-on workshop coding tasks and TODOs for Teams A & B.
+- [**`ARCHITECTURE.md`**](ARCHITECTURE.md): Full system architecture, sequence diagrams, and protocol schemas.
