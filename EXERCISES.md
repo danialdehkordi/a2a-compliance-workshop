@@ -1,10 +1,46 @@
-# 🏛️ Enterprise Multi-Agent Workshop Exercises
+# 🏛️ Enterprise Multi-Agent Workshop: Hands-On Challenge Guide
 
-Welcome to the hands-on exercises for the **Enterprise Multi-Agent Compliance Workshop**!
+Welcome to the **Enterprise Multi-Agent Compliance Workshop**!
 
-Participants split into two parallel engineering teams working in this unified monorepo:
-- **Team A**: Python ADK Extractor & Orchestrator Agent (`extraction-orchestration-agent/`)
-- **Team B**: Go Compliance & Governance Policy Engine (`compliance-governance-agent/`)
+In this full-day challenge, you will design and build a production-grade, polyglot multi-agent compliance mesh using **Google ADK (Agent Development Kit)**, **A2A (Agent-to-Agent Protocol)**, and **Gemini on Google Cloud**.
+
+Participants work in two collaborative engineering streams:
+- **👥 Team A (Python ADK & Agent Platform)**: Focuses on LLM fact extraction, database variance checking, Human-in-the-Loop (HITL) gates, and dynamic A2A dispatch (`extraction-orchestration-agent/`).
+- **⚙️ Team B (Go Governance & Policy Engine)**: Focuses on A2A Agent Card discovery (`/.well-known/agent.json`), JSON-RPC 2.0 routing, and deterministic policy rule enforcement (`compliance-governance-agent/`).
+
+---
+
+## 🏆 Workshop Scoring Matrix
+
+| Task | Stream | Description | Max Points |
+| :--- | :--- | :--- | :--- |
+| **A.1** | Team A | LLM Contract Fact Extraction with Gemini & Schema Validation | **1,000 pts** |
+| **A.2** | Team A | Historical Baseline Tool & Context Window Protection | **1,000 pts** |
+| **A.3** | Team A | Human-in-the-Loop (HITL) Policy Confirmation Gate | **1,500 pts** |
+| **A.4** | Team A | A2A Protocol Discovery & JSON-RPC Client Dispatch | **2,000 pts** |
+| **B.1** | Team B | A2A Agent Card Discovery Endpoint (`/.well-known/agent.json`) | **1,000 pts** |
+| **B.2** | Team B | A2A JSON-RPC 2.0 Request Router & Unmarshaling | **1,500 pts** |
+| **B.3** | Team B | Deterministic Policy Evaluation & Audit Badge Rendering | **1,500 pts** |
+| **Joint 1** | All | End-to-End A2A Mesh Integration & Cockpit Review | **2,500 pts** |
+| **Joint 2** | All | ADK Evaluations (`adk eval`) & Cloud Trace Verification | **1,500 pts** |
+| **Total** | | | **12,500 pts** |
+
+---
+
+## 🛡️ Golden Rules for Building Production Agent Tools
+*(Evaluated during code review & verification)*
+
+> ### 1. 🔒 Security First (No SQL / Prompt Injections)
+> Always use parameterized inputs for database queries (`aiosqlite`, BigQuery, etc.). Never interpolate raw user/LLM strings with f-strings into SQL statements.
+>
+> ### 2. 📝 Docstrings are the LLM User Interface
+> LLMs do not read your function code; they read your docstrings and type annotations. Write explicit parameter descriptions and return schemas.
+>
+> ### 3. 🛡️ Protect the Context Window
+> Return clean, concise text or structured JSON snippets. Never dump massive unfiltered blobs or raw binary files into the model context.
+>
+> ### 4. 🚨 Fail Usefully — Don't Swallow Exceptions
+> Expected business outcomes (e.g., *"Vendor not found in baseline database"*) are valid return strings. Infrastructure failures (network timeouts, IAM auth errors) must raise exceptions so ADK retry and reflection machinery can trigger.
 
 ---
 
@@ -12,52 +48,51 @@ Participants split into two parallel engineering teams working in this unified m
 
 ### ❓ Exercise A.1: LLM Contract Fact Extraction
 - **Target File**: `extraction-orchestration-agent/app/tools.py`
-- **Task**: Implement `extract_contract_facts(filename, contract_text)`. Extract legal parameters (`vendor_name`, `contract_value`, `term_years`, `liability_cap`, `insurance_amount`) from unstructured contract text using Gemini / RegEx fallback.
-- **Goal**: Return a clean Python dictionary of extracted facts.
+- **Task**: Implement `extract_contract_facts(filename, contract_text)`. Extract typed legal parameters (`vendor_name`, `contract_value`, `term_years`, `liability_cap`, `insurance_amount`, `auto_renewal`) from unstructured agreements using Gemini.
+- **Goal**: Return a typed Python dictionary.
 
 ```python
 # TODO EXERCISE A.1:
-# 1. Parse contract value ($)
-# 2. Extract term length in years
-# 3. Detect "unlimited liability" clause
-# 4. Extract insurance coverage amount
+# 1. Parse contract value ($ float)
+# 2. Extract term length in years (int)
+# 3. Detect "unlimited liability" clause (str)
+# 4. Extract required insurance coverage floor (float)
 ```
 
 ---
 
 ### ❓ Exercise A.2: Historical Baseline Variance Calculation
 - **Target File**: `extraction-orchestration-agent/app/tools.py`
-- **Task**: Implement `calculate_historical_variance(facts)`. Query the vendor's historical average from SQLite DB (`get_vendor_baseline`) and calculate `value_variance_pct`. Set `variance_flagged = True` if current contract value is >20% above historical baseline.
+- **Task**: Implement `calculate_historical_variance(facts)`. Query the vendor's historical benchmark from the SQLite database (`get_vendor_baseline`) and calculate `value_variance_pct`. Flag `variance_flagged = True` if the current contract value exceeds baseline by >15%.
 - **Formula**: `((current_value - historical_avg) / historical_avg) * 100`
 
+---
+
+### ❓ Exercise A.3: Human-in-the-Loop (HITL) Gate for High-Risk Contracts
+- **Target File**: `extraction-orchestration-agent/app/agent.py`
+- **Task**: Implement an ADK `FunctionTool` confirmation predicate:
+  - Contracts with **unlimited liability** or **value > $500k** must trigger human operator sign-off before dispatching to governance.
+  - Standard/low-risk contracts pass through automatically without interrupting the operator.
+
 ```python
-# TODO EXERCISE A.2:
-# 1. Fetch vendor historical baseline from database
-# 2. Compute percentage value increase
-# 3. Flag variance if increase > 20% or liability clause escalated
+from google.adk.tools import FunctionTool
+
+def is_high_risk_contract(facts: dict) -> bool:
+    """Predicate: returns True if contract requires human sign-off."""
+    return facts.get("contract_value", 0) > 500000 or facts.get("liability_cap") == "unlimited"
+
+# Wrap dispatch with conditional confirmation:
+governance_tool = FunctionTool(dispatch_a2a_compliance_check, require_confirmation=is_high_risk_contract)
 ```
 
 ---
 
-### ❓ Exercise A.3: A2A Protocol Discovery & JSON-RPC Dispatch
+### ❓ Exercise A.4: A2A Protocol Discovery & JSON-RPC Dispatch
 - **Target File**: `extraction-orchestration-agent/app/agent.py`
 - **Task**: Implement `dispatch_a2a_compliance_check(case_id, facts, variance)`.
-  1. Fetch Team B's remote Agent Card from `REMOTE_A2A_AGENT_CARD_URL` (`GET /.well-known/agent.json`).
-  2. Acquire a GCP OIDC Identity Token for IAM service-to-service authentication.
-  3. Construct an A2A JSON-RPC 2.0 `message/send` request and POST to Team B's agent.
-
-```python
-# TODO EXERCISE A.3:
-# 1. GET REMOTE_A2A_AGENT_CARD_URL
-# 2. Acquire google.oauth2.id_token
-# 3. Construct JSON-RPC 2.0 payload and POST to Go agent endpoint
-```
-
----
-
-### ❓ Exercise A.4: Deploy to Gemini Enterprise Agent Platform
-- **Target File**: `extraction-orchestration-agent/deploy_to_agent_platform.py`
-- **Task**: Package the Python ADK agent as a `vertexai.preview.reasoning_engines.ReasoningEngine` resource and deploy to region `europe-west3`.
+  1. Fetch Team B's remote Agent Card (`GET /.well-known/agent.json`).
+  2. Acquire a Google Cloud OIDC Identity Token for IAM service-to-service authentication.
+  3. Construct a standard A2A JSON-RPC 2.0 `message/send` payload and POST to Team B's endpoint.
 
 ---
 
@@ -65,55 +100,39 @@ Participants split into two parallel engineering teams working in this unified m
 
 ### ❓ Exercise B.1: A2A Agent Card Discovery Endpoint
 - **Target File**: `compliance-governance-agent/internal/agentcard/card.go`
-- **Task**: Implement `HandleAgentCard(baseURL)`. Return a JSON `AgentCard` advertising name, description, version `"1.0.0"`, protocols `["JSON-RPC 2.0", "A2A/1.0"]`, and the dynamic `baseURL`.
-
-```go
-// TODO EXERCISE B.1:
-// Construct and return AgentCard JSON struct with dynamic baseURL
-```
+- **Task**: Implement `HandleAgentCard(baseURL)`. Return a standard JSON `AgentCard` advertising name, capabilities, version `"1.0.0"`, protocols `["JSON-RPC 2.0", "A2A/1.0"]`, and the dynamically resolved `baseURL`.
 
 ---
 
 ### ❓ Exercise B.2: A2A JSON-RPC Request Router
 - **Target File**: `compliance-governance-agent/internal/handler/jsonrpc.go`
-- **Task**: Implement `HandleJSONRPC()`. Unmarshal incoming A2A JSON-RPC 2.0 `message/send` requests, extract `ContractFacts` and `HistoricalVariance` from message parts, call `policy.EvaluateContractPolicy()`, and encode a JSON-RPC 2.0 success response.
-
-```go
-// TODO EXERCISE B.2:
-// Decode JSON-RPC 2.0 request envelope
-// Extract facts & variance from message parts
-// Call policy.EvaluateContractPolicy(facts, variance)
-// Return JSON-RPC 2.0 response
-```
+- **Task**: Implement `HandleJSONRPC()`. Unmarshal incoming A2A JSON-RPC 2.0 `message/send` requests, validate envelope headers, extract `ContractFacts` and `HistoricalVariance`, and route to the deterministic policy engine.
 
 ---
 
-### ❓ Exercise B.3: Deterministic Policy Engine Evaluation
+### ❓ Exercise B.3: Deterministic Policy Evaluation Engine
 - **Target File**: `compliance-governance-agent/internal/policy/engine.go`
-- **Task**: Implement `EvaluateContractPolicy(facts, variance)`. Evaluate hard corporate rules:
+- **Task**: Implement `EvaluateContractPolicy(facts, variance)` to enforce zero-hallucination compliance:
   1. `ContractValue > $500,000.00` → Flagged
   2. `TermYears > 5` → Flagged
   3. `InsuranceAmount < $1,000,000.00` → Flagged
   4. `LiabilityCap == "unlimited"` → Flagged
   5. `VarianceFlagged == true` → Flagged
-  Return `PASS` if 0 violations, or `REVIEW` if any violations exist, with a rendered HTML audit certificate badge.
+  - Return `PASS` if 0 violations, or `REVIEW` if violations exist, along with an official rendered HTML audit certificate badge.
 
-```go
-// TODO EXERCISE B.3:
-// Enforce policy rules and return PolicyCheckResult struct
+---
+
+## 🚀 Joint Integration & Production Evaluation
+
+### ❓ Joint Exercise 1: Multi-Agent Mesh Deployment
+- Deploy Team A (FastAPI / ADK Gateway) to Cloud Run in `europe-west3`.
+- Deploy Team B (Go Policy Engine) to Cloud Run in `europe-west3`.
+- Launch `cockpit-frontend/index.html` and run live contract audits.
+
+### ❓ Joint Exercise 2: Automated ADK Evaluations (`adk eval`)
+- Run deterministic eval suites to ensure model extraction accuracy across edge cases:
+```bash
+adk eval extraction_agent tests/extraction_evalset.json
 ```
+- Verify distributed OpenTelemetry traces across the Python and Go agent boundaries in Google Cloud Trace.
 
----
-
-### ❓ Exercise B.4: Cloud Run Multi-Stage Dockerfile
-- **Target File**: `compliance-governance-agent/Dockerfile`
-- **Task**: Write a multi-stage Dockerfile compiling Go in `golang:1.22-alpine` and deploying in `alpine:latest` listening on `${PORT:-8080}`.
-
----
-
-## 🚀 Joint Integration Exercise
-
-1. Deploy Team A Gateway to Cloud Run.
-2. Deploy Team B Policy Agent to Cloud Run.
-3. In `cockpit-frontend/index.html`, set `API_ORIGIN` to Team A's Cloud Run URL.
-4. Open the Cockpit UI and run live sample audits!
