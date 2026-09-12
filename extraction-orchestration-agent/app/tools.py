@@ -72,116 +72,45 @@ def _iso_date(month: str, day: str, year: str) -> str:
 
 
 def extract_contract_facts(filename: str, text_content: str) -> dict:
-    """Extracts comprehensive legal parameters matching the reference extraction agent."""
-    sample_name = os.path.basename(filename)
-    normalized_text = text_content.strip()
-    
-    if not normalized_text and sample_name in SAMPLE_CONTRACT_DETAILS:
-        extracted = dict(SAMPLE_CONTRACT_DETAILS[sample_name])
-    else:
-        amounts = re.findall(r"\$[\d,]+(?:\.\d{2})?", normalized_text)
-        dates = re.findall(
-            r"(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),\s+(\d{4})",
-            normalized_text,
-            flags=re.IGNORECASE,
-        )
-        parties = re.search(
-            r"between\s+(.+?)\s+\(\"Contractor\"\)\s+and\s+(.+?)\s+\(\"Client\"\)",
-            normalized_text,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-        if not parties:
-            parties = re.search(
-                r"PARTIES:\s*(?:This Agreement is entered into by and between\s+)?(.+?)\s*(?:&|\band\b)\s*(.+?)(?:\n|$)",
-                normalized_text,
-                flags=re.IGNORECASE,
-            )
+    """Extracts comprehensive legal parameters from contract text.
 
-        duration = re.search(r"(\d+)\s+years?", normalized_text, flags=re.IGNORECASE)
+    TODO EXERCISE A.1:
+    Use Antigravity or Gemini to extract key legal facts from the contract text:
+    1. Parse contractor/vendor name ('vendor_name') and client name ('client_name').
+    2. Extract contract value as a float ('contract_value').
+    3. Extract term duration in years ('term_years').
+    4. Detect 'unlimited liability' clause ('liability_cap': 'unlimited' vs 'limited').
+    5. Extract required insurance coverage floor as float ('insurance_amount').
+    6. Include 'filename' in the returned dictionary.
 
-        liability_section = ""
-        liability_match = re.search(
-            r"LIMITATION OF LIABILITY:\s*(.*?)(?:\n\s*\n|INSURANCE:)",
-            normalized_text,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-        if liability_match:
-            liability_section = liability_match.group(1).strip()
-        elif "unlimited liability" in normalized_text.lower():
-            liability_section = "unlimited liability"
-        elif "liability" in normalized_text.lower():
-            liability_section = "capped"
+    Reference / Expected Keys:
+      - 'vendor_name': str
+      - 'contract_value': float
+      - 'term_years': int
+      - 'liability_cap': 'limited' | 'unlimited'
+      - 'insurance_amount': float
+      - 'filename': str
+    """
+    raise NotImplementedError("Exercise A.1: Implement extract_contract_facts() in app/tools.py")
 
-        lower_text = normalized_text.lower()
-        termination_section = ""
-        termination_match = re.search(
-            r"TERMINATION:\s*(.*?)(?:\n\s*\n|$)",
-            normalized_text,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-        if termination_match:
-            termination_section = termination_match.group(1).strip().lower()
-
-        has_termination_clause = "terminate" in lower_text or "termination" in lower_text
-        blocked_termination_phrases = (
-            "no option for termination",
-            "no option for termination or written exit",
-            "no termination",
-            "without termination",
-        )
-        if any(phrase in termination_section for phrase in blocked_termination_phrases):
-            has_termination_clause = False
-
-        contractor = parties.group(1).strip() if parties else "Acme Corp"
-        client = parties.group(2).strip() if parties else "GFD Platform Systems"
-
-        # Fallback for sample filenames if text extraction missed specifics
-        if sample_name in SAMPLE_CONTRACT_DETAILS and contractor in ("Acme Corp", "Unknown Contractor"):
-            extracted = dict(SAMPLE_CONTRACT_DETAILS[sample_name])
-        else:
-            extracted = {
-                "contract_value": _money_to_float(amounts[0]) if amounts else 450000.0,
-                "contractor_name": contractor,
-                "client_name": client,
-                "start_date": _iso_date(*dates[0]) if dates else "2026-06-01",
-                "end_date": _iso_date(*dates[1]) if len(dates) > 1 else "2027-06-01",
-                "liability_limit": liability_section or "capped",
-                "insurance_coverage": _money_to_float(amounts[-1]) if len(amounts) > 1 else 2000000.0,
-                "auto_renewal": "automatically renew" in lower_text or "auto-renewal" in lower_text,
-                "has_termination_clause": has_termination_clause,
-                "term_length_years": int(duration.group(1)) if duration else 1,
-            }
-
-    # Ensure dual-compatibility aliases for Go policy engine & HTML parameter sheet
-    extracted["filename"] = filename
-    extracted["vendor_name"] = extracted.get("contractor_name", "Acme Corp")
-    extracted["term_years"] = extracted.get("term_length_years", 1)
-    extracted["liability_cap"] = "unlimited" if "unlimited" in str(extracted.get("liability_limit", "")).lower() else "limited"
-    extracted["insurance_amount"] = extracted.get("insurance_coverage", 2000000.0)
-
-    return extracted
 
 
 async def calculate_historical_variance(facts: dict) -> dict:
-    """Compares extracted contract facts against historical vendor benchmarks in SQLite."""
-    vendor = facts.get("vendor_name") or facts.get("contractor_name", "Acme Corp")
-    baseline = await get_vendor_baseline(vendor)
+    """Compares extracted contract facts against historical vendor benchmarks in SQLite.
 
-    avg_val = baseline.get("avg_contract_value", 300000.0)
-    current_val = facts.get("contract_value", 0.0)
+    TODO EXERCISE A.2:
+    1. Fetch vendor baseline from SQLite using `await get_vendor_baseline(vendor_name)`.
+    2. Calculate percentage variance: ((current_value - baseline_avg) / baseline_avg) * 100.
+    3. Detect liability spikes (e.g. current is 'unlimited' while historical max was 'limited').
+    4. Set `variance_flagged = True` if value variance > 15.0% or liability spike detected.
+    5. Return dictionary with:
+       - 'vendor_name': str
+       - 'historical_avg_value': float
+       - 'current_value': float
+       - 'value_variance_pct': float
+       - 'variance_flagged': bool
+       - 'liability_spike': bool
+    """
+    raise NotImplementedError("Exercise A.2: Implement calculate_historical_variance() in app/tools.py")
 
-    value_increase_pct = 0.0
-    if avg_val > 0:
-        value_increase_pct = round(((current_val - avg_val) / avg_val) * 100, 1)
-
-    liability_spike = facts.get("liability_cap") == "unlimited" and baseline.get("max_historical_liability") == "limited"
-
-    return {
-        "vendor_name": vendor,
-        "historical_avg_value": avg_val,
-        "current_value": current_val,
-        "value_variance_pct": value_increase_pct,
-        "variance_flagged": value_increase_pct > 15.0 or liability_spike,
-        "liability_spike": liability_spike,
-    }
 

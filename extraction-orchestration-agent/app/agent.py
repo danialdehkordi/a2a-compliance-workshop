@@ -27,53 +27,35 @@ def _get_identity_token(target_url: str) -> str | None:
         return None
 
 
+def is_high_risk_contract(facts: dict, variance: dict | None = None) -> bool:
+    """Predicate determining if a contract requires human operator approval before governance dispatch.
+
+    TODO EXERCISE A.3:
+    Implement the risk predicate:
+    Return True (triggering HITL confirmation) if:
+      - contract_value > 500,000.0
+      - OR liability_cap == 'unlimited'
+      - OR variance is flagged (variance.get('variance_flagged') is True)
+    Otherwise return False (automatic low-risk pass-through).
+    """
+    raise NotImplementedError("Exercise A.3: Implement is_high_risk_contract() in app/agent.py")
+
+
 async def dispatch_a2a_compliance_check(case_id: str, facts: dict, variance: dict) -> dict:
-    if USE_MOCK:
-        return generate_mock_a2a_response(case_id, facts, variance)
+    """Dispatches extracted facts and variance to Team B's remote Go policy agent via A2A protocol.
 
-    token = _get_identity_token(REMOTE_AGENT_CARD_URL)
-    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    TODO EXERCISE A.4:
+    1. Check USE_MOCK: if True, return generate_mock_a2a_response(case_id, facts, variance).
+    2. Fetch remote Agent Card from REMOTE_AGENT_CARD_URL (GET /.well-known/agent.json)
+       and dynamically resolve the service endpoint URL (card_data.get('url')).
+    3. Obtain a GCP OIDC Identity Token for the target endpoint using `_get_identity_token(endpoint)`.
+    4. Construct a standard A2A JSON-RPC 2.0 'message/send' payload:
+       - jsonrpc: "2.0"
+       - id: case_id
+       - method: "message/send"
+       - params: { "message": { "role": "user", "parts": [ { "data": { "case_id": case_id, "facts": facts, "variance": variance } } ] } }
+    5. Send POST request with JSON-RPC payload and Bearer token header.
+    6. Return the JSON-RPC 'result' object.
+    """
+    raise NotImplementedError("Exercise A.4: Implement dispatch_a2a_compliance_check() in app/agent.py")
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        try:
-            card_res = await client.get(REMOTE_AGENT_CARD_URL, headers=headers)
-            card_res.raise_for_status()
-            card_data = card_res.json()
-            endpoint = card_data.get("url", REMOTE_AGENT_CARD_URL.replace("/.well-known/agent.json", ""))
-        except Exception as e:
-            print(f"[A2A Warning] Failed to discover Agent Card ({e}), falling back to direct endpoint.")
-            endpoint = REMOTE_AGENT_CARD_URL.replace("/.well-known/agent.json", "")
-
-        payload = {
-            "jsonrpc": "2.0",
-            "id": case_id,
-            "method": "message/send",
-            "params": {
-                "message": {
-                    "role": "user",
-                    "parts": [
-                        {
-                            "text": f"Evaluate contract policy for case {case_id}",
-                            "data": {
-                                "case_id": case_id,
-                                "facts": facts,
-                                "variance": variance,
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-
-        token = _get_identity_token(endpoint)
-        headers = {"Content-Type": "application/json"}
-        if token:
-            headers["Authorization"] = f"Bearer {token}"
-
-        try:
-            res = await client.post(endpoint, json=payload, headers=headers)
-            res.raise_for_status()
-            return res.json().get("result", {})
-        except Exception as e:
-            print(f"[A2A Error] Failed to execute JSON-RPC handoff: {e}")
-            return generate_mock_a2a_response(case_id, facts, variance)

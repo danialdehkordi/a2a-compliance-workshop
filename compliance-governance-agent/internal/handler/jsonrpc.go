@@ -51,62 +51,14 @@ func HandleJSONRPC() http.HandlerFunc {
 			return
 		}
 
-		var req JSONRPCRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid JSON-RPC request", http.StatusBadRequest)
-			return
-		}
-
-		if req.Method != "message/send" {
-			res := JSONRPCResponse{
-				JSONRPC: "2.0",
-				ID:      req.ID,
-				Error:   map[string]interface{}{"code": -32601, "message": "Method not found"},
-			}
-			json.NewEncoder(w).Encode(res)
-			return
-		}
-
-		var msg A2AMessage
-		if err := json.Unmarshal(req.Params, &msg); err != nil {
-			res := JSONRPCResponse{
-				JSONRPC: "2.0",
-				ID:      req.ID,
-				Error:   map[string]interface{}{"code": -32602, "message": "Invalid params"},
-			}
-			json.NewEncoder(w).Encode(res)
-			return
-		}
-
-		facts := policy.ContractFacts{
-			CaseID:          "case-default",
-			VendorName:      "Acme Corp",
-			ContractValue:   450000.0,
-			TermYears:       3,
-			LiabilityCap:    "limited",
-			InsuranceAmount: 2000000.0,
-		}
-		variance := policy.HistoricalVariance{}
-
-		if len(msg.Message.Parts) > 0 {
-			data := msg.Message.Parts[0].Data
-			if data.CaseID != "" {
-				facts.CaseID = data.CaseID
-			}
-			if data.Facts.VendorName != "" {
-				facts = data.Facts
-			}
-			variance = data.Variance
-		}
-
-		result := policy.EvaluateContractPolicy(facts, variance)
-
-		res := JSONRPCResponse{
-			JSONRPC: "2.0",
-			ID:      req.ID,
-			Result:  result,
-		}
-
-		json.NewEncoder(w).Encode(res)
+		// TODO EXERCISE B.2:
+		// 1. Decode incoming JSON-RPC 2.0 request into `var req JSONRPCRequest`.
+		// 2. Validate that req.Method is "message/send" (return JSON-RPC error code -32601 if not).
+		// 3. Unmarshal req.Params into `A2AMessage` struct (return JSON-RPC error code -32602 if invalid).
+		// 4. Extract ContractFacts and HistoricalVariance from msg.Message.Parts[0].Data.
+		// 5. Call policy.EvaluateContractPolicy(facts, variance).
+		// 6. Wrap result in JSONRPCResponse{JSONRPC: "2.0", ID: req.ID, Result: result} and encode as JSON.
+		http.Error(w, "Exercise B.2: Implement HandleJSONRPC() in internal/handler/jsonrpc.go", http.StatusNotImplemented)
 	}
 }
+

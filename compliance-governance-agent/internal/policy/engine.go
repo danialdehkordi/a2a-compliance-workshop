@@ -36,52 +36,20 @@ type PolicyCheckResult struct {
 	CertificateHTML string   `json:"certificate_html"`
 }
 
+var _ = fmt.Sprintf
+
 func EvaluateContractPolicy(facts ContractFacts, variance HistoricalVariance) PolicyCheckResult {
-	var violations []string
-
-	// 1. Hard Corporate Policy Rules
-	if facts.ContractValue > 500000.0 {
-		violations = append(violations, fmt.Sprintf("Contract value $%.2f exceeds hard policy cap of $500,000.00", facts.ContractValue))
-	}
-
-	if facts.TermYears > 5 {
-		violations = append(violations, fmt.Sprintf("Term length %d years exceeds 5 year policy maximum", facts.TermYears))
-	}
-
-	if facts.InsuranceAmount < 1000000.0 {
-		violations = append(violations, fmt.Sprintf("Insurance coverage $%.2f is below minimum required $1,000,000.00", facts.InsuranceAmount))
-	}
-
-	if facts.LiabilityCap == "unlimited" {
-		violations = append(violations, "Prohibited clause: Unlimited liability is prohibited by corporate policy")
-	}
-
-	// 2. Historical Variance Rules
-	if variance.VarianceFlagged {
-		if variance.LiabilitySpike {
-			violations = append(violations, "Historical Variance Alert: Unprecedented liability clause escalation compared to vendor history")
-		} else {
-			violations = append(violations, fmt.Sprintf("Historical Variance Alert: Contract value is +%.1f%% above historical vendor baseline ($%.2f)", variance.ValueVariancePct, variance.HistoricalAvgValue))
-		}
-	}
-
-	verdict := "PASS"
-	if len(violations) > 0 {
-		verdict = "REVIEW"
-	}
-
-	caseID := facts.CaseID
-	if caseID == "" {
-		caseID = "case-unknown"
-	}
-
-	certHTML := GenerateAuditCertificateHTML(caseID, facts.VendorName, verdict, violations)
-
-	return PolicyCheckResult{
-		CaseID:          caseID,
-		Status:          "COMPLETED",
-		Verdict:         verdict,
-		Violations:      violations,
-		CertificateHTML: certHTML,
-	}
+	// TODO EXERCISE B.3:
+	// Evaluate deterministic corporate policy rules without hallucinations:
+	// 1. Hard Rule: facts.ContractValue > 500,000.0 -> add violation
+	// 2. Hard Rule: facts.TermYears > 5 -> add violation
+	// 3. Hard Rule: facts.InsuranceAmount < 1,000,000.0 -> add violation
+	// 4. Hard Rule: facts.LiabilityCap == "unlimited" -> add violation
+	// 5. Variance Rule: variance.VarianceFlagged -> add historical spike violation (handle variance.LiabilitySpike)
+	// 6. Verdict: "PASS" if len(violations) == 0 else "REVIEW"
+	// 7. CaseID: default to "case-unknown" if facts.CaseID is empty
+	// 8. Generate audit certificate HTML using GenerateAuditCertificateHTML(caseID, facts.VendorName, verdict, violations)
+	// 9. Return PolicyCheckResult struct with CaseID, Status: "COMPLETED", Verdict, Violations, CertificateHTML
+	panic("Exercise B.3: Implement EvaluateContractPolicy() in internal/policy/engine.go")
 }
+

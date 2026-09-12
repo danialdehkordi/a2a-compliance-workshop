@@ -21,17 +21,16 @@ type AgentCard struct {
 
 func HandleAgentCard(baseURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-
-		card := AgentCard{
-			Name:        "Compliance & Governance Agent (Go)",
-			Description: "Deterministic policy validator for contract value limits, liability caps, insurance, and historical variance.",
-			URL:         baseURL,
-			Version:     "1.0.0",
-			Protocols:   []string{"JSON-RPC 2.0", "A2A/1.0"},
-		}
-
-		json.NewEncoder(w).Encode(card)
+		// TODO EXERCISE B.1:
+		// 1. Set response Content-Type to "application/json" and Access-Control-Allow-Origin to "*".
+		// 2. Construct an AgentCard struct advertising:
+		//    - Name: "Compliance & Governance Agent (Go)"
+		//    - Description: "Deterministic policy validator for contract value limits, liability caps, insurance, and historical variance."
+		//    - URL: baseURL
+		//    - Version: "1.0.0"
+		//    - Protocols: []string{"JSON-RPC 2.0", "A2A/1.0"}
+		// 3. Encode the card as JSON to the ResponseWriter.
+		http.Error(w, "Exercise B.1: Implement HandleAgentCard() in internal/agentcard/card.go", http.StatusNotImplemented)
 	}
 }
+
