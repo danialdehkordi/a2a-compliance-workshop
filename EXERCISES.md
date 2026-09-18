@@ -93,11 +93,11 @@ Participants work in two collaborative engineering streams:
 # Run unit tests:
 cd extraction-orchestration-agent && uv run python -m pytest -v tests/
 
-# Deploy standalone to Cloud Run (mcp-lud-wew, europe-west3) in decoupled mock mode:
-gcloud run deploy hackathon-ext-agent \
+# Deploy standalone to Cloud Run (europe-west3) in decoupled mock mode:
+gcloud run deploy extraction-orchestration-agent \
   --source ./extraction-orchestration-agent \
   --region europe-west3 \
-  --project mcp-lud-wew \
+  --project <YOUR_GCP_PROJECT_ID> \
   --set-env-vars USE_A2A_MOCK=true \
   --allow-unauthenticated \
   --quiet
@@ -134,16 +134,16 @@ gcloud run deploy hackathon-ext-agent \
 # Run unit tests:
 cd compliance-governance-agent && go test -v ./...
 
-# Deploy standalone to Cloud Run (mcp-lud-wew, europe-west3):
-gcloud run deploy hackathon-gov-agent \
+# Deploy standalone to Cloud Run (europe-west3):
+gcloud run deploy compliance-governance-agent \
   --source ./compliance-governance-agent \
   --region europe-west3 \
-  --project mcp-lud-wew \
+  --project <YOUR_GCP_PROJECT_ID> \
   --allow-unauthenticated \
   --quiet
 
 # Verify remote endpoints directly via cURL:
-curl -s https://<hackathon-gov-agent-url>/.well-known/agent.json
+curl -s https://<compliance-governance-agent-url>/.well-known/agent.json
 ```
 
 ---
@@ -153,20 +153,20 @@ curl -s https://<hackathon-gov-agent-url>/.well-known/agent.json
 ### ❓ Joint Exercise 1: Multi-Agent Mesh Deployment
 1. Connect Team A to Team B by updating Cloud Run environment:
 ```bash
-gcloud run deploy hackathon-ext-agent \
+gcloud run deploy extraction-orchestration-agent \
   --source ./extraction-orchestration-agent \
   --region europe-west3 \
-  --project mcp-lud-wew \
-  --set-env-vars USE_A2A_MOCK=false,REMOTE_A2A_AGENT_CARD_URL=https://<hackathon-gov-agent-url>/.well-known/agent.json \
+  --project <YOUR_GCP_PROJECT_ID> \
+  --set-env-vars USE_A2A_MOCK=false,REMOTE_A2A_AGENT_CARD_URL=https://<compliance-governance-agent-url>/.well-known/agent.json \
   --allow-unauthenticated \
   --quiet
 ```
 2. Deploy Cockpit Frontend to Cloud Run in `europe-west3`:
 ```bash
-gcloud run deploy hackathon-cockpit \
+gcloud run deploy cockpit-frontend \
   --source ./cockpit-frontend \
   --region europe-west3 \
-  --project mcp-lud-wew \
+  --project <YOUR_GCP_PROJECT_ID> \
   --allow-unauthenticated \
   --quiet
 ```

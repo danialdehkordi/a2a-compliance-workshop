@@ -16,10 +16,10 @@ permissions:
   pull-requests: read
 
 env:
-  GCP_PROJECT: mcp-lud-wew
+  GCP_PROJECT: ${{ secrets.GCP_PROJECT || 'YOUR_GCP_PROJECT' }}
   GCP_REGION: europe-west3
-  WIF_PROVIDER: ${{ secrets.WIF_PROVIDER || 'projects/121116282931/locations/global/workloadIdentityPools/github-pool/providers/github-provider' }}
-  WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT || 'github-actions-builder@mcp-lud-wew.iam.gserviceaccount.com' }}
+  WIF_PROVIDER: ${{ secrets.WIF_PROVIDER }}
+  WIF_SERVICE_ACCOUNT: ${{ secrets.WIF_SERVICE_ACCOUNT }}
 
 jobs:
   # ---------------------------------------------------------------------------

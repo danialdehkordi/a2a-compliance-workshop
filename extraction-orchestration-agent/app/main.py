@@ -2,13 +2,18 @@
 
 import os
 import uuid
-import vertexai
 from pathlib import Path
 from fastapi import FastAPI, Form, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel
-from vertexai.preview import reasoning_engines
+
+try:
+    import vertexai
+    from vertexai.preview import reasoning_engines
+except ImportError:
+    vertexai = None
+    reasoning_engines = None
 
 from app.tools import extract_contract_facts, calculate_historical_variance
 from app.agent import dispatch_a2a_compliance_check
@@ -27,18 +32,18 @@ app.add_middleware(
 CASES = {}
 SAMPLE_CONTRACTS_DIR = Path(__file__).parent / "static" / "sample-contracts"
 
-PROJECT_ID = os.getenv("GCP_PROJECT", "mcp-lud-wew")
+PROJECT_ID = os.getenv("GCP_PROJECT", os.getenv("GOOGLE_CLOUD_PROJECT", ""))
 LOCATION = os.getenv("GCP_LOCATION", "europe-west3")
-REASONING_ENGINE_ID = os.getenv(
-    "REASONING_ENGINE_RESOURCE_NAME",
-    "projects/121116282931/locations/europe-west3/reasoningEngines/5292837869881131008"
-)
+REASONING_ENGINE_ID = os.getenv("REASONING_ENGINE_RESOURCE_NAME", "")
 
 # Initialize Vertex AI / Agent Platform SDK
 try:
-    vertexai.init(project=PROJECT_ID, location=LOCATION)
-    agent_platform_engine = reasoning_engines.ReasoningEngine(REASONING_ENGINE_ID)
-    print(f"✅ Connected to Gemini Enterprise Agent Platform: {REASONING_ENGINE_ID}")
+    if vertexai and reasoning_engines and PROJECT_ID and REASONING_ENGINE_ID:
+        vertexai.init(project=PROJECT_ID, location=LOCATION)
+        agent_platform_engine = reasoning_engines.ReasoningEngine(REASONING_ENGINE_ID)
+        print(f"✅ Connected to Gemini Enterprise Agent Platform: {REASONING_ENGINE_ID}")
+    else:
+        agent_platform_engine = None
 except Exception as e:
     print(f"⚠️ Agent Platform SDK Warning: {e}")
     agent_platform_engine = None
@@ -174,7 +179,7 @@ async def upload_and_run(
             "status": "completed",
             "source_agent": "python-agent-platform",
             "target_agent": "go-compliance-agent",
-            "agent_card_url": "https://compliance-governance-agent-121116282931.europe-west3.run.app/.well-known/agent.json",
+            "agent_card_url": os.getenv("REMOTE_A2A_AGENT_CARD_URL", "https://compliance-governance-agent.run.app/.well-known/agent.json"),
             "method": "message/send (A2A JSON-RPC 2.0)",
             "contract_details": {
                 "contractor_name": facts.get("vendor_name", "Acme Corp"),

@@ -3,9 +3,9 @@ import re
 import vertexai
 from vertexai.preview import reasoning_engines
 
-PROJECT_ID = "mcp-lud-wew"
-LOCATION = "europe-west3"
-STAGING_BUCKET = f"gs://{PROJECT_ID}-agent-platform-staging"
+PROJECT_ID = os.getenv("GCP_PROJECT", os.getenv("GOOGLE_CLOUD_PROJECT", "<YOUR_GCP_PROJECT_ID>"))
+LOCATION = os.getenv("GCP_LOCATION", "europe-west3")
+STAGING_BUCKET = os.getenv("STAGING_BUCKET", f"gs://{PROJECT_ID}-agent-platform-staging")
 
 print(f"Initializing Vertex AI / Agent Platform for project {PROJECT_ID} in {LOCATION}...")
 vertexai.init(project=PROJECT_ID, location=LOCATION, staging_bucket=STAGING_BUCKET)
@@ -43,7 +43,7 @@ class AgentComplianceOrchestrator:
         }
 
 if __name__ == "__main__":
-    remote_url = os.getenv("REMOTE_A2A_AGENT_CARD_URL", "https://compliance-governance-agent-121116282931.europe-west3.run.app/.well-known/agent.json")
+    remote_url = os.getenv("REMOTE_A2A_AGENT_CARD_URL", "https://<COMPLIANCE_AGENT_URL>/.well-known/agent.json")
     
     print("Deploying Stage 1 Python ADK Agent to Gemini Enterprise Agent Platform (Reasoning Engine Runtime)...")
     agent_app = reasoning_engines.ReasoningEngine.create(

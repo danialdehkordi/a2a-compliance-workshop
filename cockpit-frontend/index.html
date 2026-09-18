@@ -2427,9 +2427,7 @@
       let lastTickerMessage = "";
       const urlParams = new URLSearchParams(window.location.search);
       const API_ORIGIN = urlParams.get("api") || (
-        (window.location.origin.includes("cockpit") || (window.location.origin.includes("run.app") && !window.location.origin.includes("extraction") && !window.location.origin.includes("ext-agent")))
-          ? "https://extraction-orchestration-agent-121116282931.europe-west3.run.app"
-          : (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : "")
+        window.location.protocol === "file:" ? "http://127.0.0.1:8000" : ""
       );
 
       function apiUrl(path) {
