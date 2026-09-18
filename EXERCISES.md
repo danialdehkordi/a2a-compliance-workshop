@@ -63,36 +63,45 @@ Participants work in two collaborative engineering streams:
 
 ### ❓ Exercise A.2: Historical Baseline Variance Calculation
 - **Target File**: `extraction-orchestration-agent/app/tools.py`
-- **Task**: Implement `calculate_historical_variance(facts)`. Query the vendor's historical benchmark from the SQLite database (`get_vendor_baseline`) and calculate `value_variance_pct`. Flag `variance_flagged = True` if the current contract value exceeds baseline by >15%.
-- **Formula**: `((current_value - historical_avg) / historical_avg) * 100`
+- **Task**: Implement `calculate_historical_variance(facts)`. Query the vendor's historical benchmark from the SQLite database (`get_vendor_baseline`) and calculate `value_variance_pct`. Flag `variance_flagged = True` if the current contract value exceeds baseline by >15% or if a liability spike is detected (`facts['liability_cap'] == 'unlimited'` while historical was `'limited'`).
+- **Formula**: `round(((current_value - historical_avg) / historical_avg) * 100, 1)`
 
 ---
 
 ### ❓ Exercise A.3: Human-in-the-Loop (HITL) Gate for High-Risk Contracts
 - **Target File**: `extraction-orchestration-agent/app/agent.py`
-- **Task**: Implement an ADK `FunctionTool` confirmation predicate:
-  - Contracts with **unlimited liability** or **value > $500k** must trigger human operator sign-off before dispatching to governance.
-  - Standard/low-risk contracts pass through automatically without interrupting the operator.
-
-```python
-from google.adk.tools import FunctionTool
-
-def is_high_risk_contract(facts: dict) -> bool:
-    """Predicate: returns True if contract requires human sign-off."""
-    return facts.get("contract_value", 0) > 500000 or facts.get("liability_cap") == "unlimited"
-
-# Wrap dispatch with conditional confirmation:
-governance_tool = FunctionTool(dispatch_a2a_compliance_check, require_confirmation=is_high_risk_contract)
-```
+- **Task**: Implement an ADK `FunctionTool` confirmation predicate `is_high_risk_contract(facts, variance)`:
+  - Return `True` (triggering human operator sign-off) if:
+    - `contract_value > $500,000.0`
+    - OR `liability_cap == "unlimited"`
+    - OR `variance.get("variance_flagged") is True`
+  - Otherwise return `False` (automatic low-risk pass-through).
 
 ---
 
 ### ❓ Exercise A.4: A2A Protocol Discovery & JSON-RPC Dispatch
 - **Target File**: `extraction-orchestration-agent/app/agent.py`
 - **Task**: Implement `dispatch_a2a_compliance_check(case_id, facts, variance)`.
-  1. Fetch Team B's remote Agent Card (`GET /.well-known/agent.json`).
-  2. Acquire a Google Cloud OIDC Identity Token for IAM service-to-service authentication.
-  3. Construct a standard A2A JSON-RPC 2.0 `message/send` payload and POST to Team B's endpoint.
+  1. **Decoupled Development Mode**: Check `USE_MOCK`: if `True`, immediately return `generate_mock_a2a_response(case_id, facts, variance)`. *(This allows Team A to develop and test their entire pipeline and deploy to Cloud Run without waiting for Team B!)*
+  2. Fetch Team B's remote Agent Card (`GET /.well-known/agent.json`) and dynamically resolve `card_data.get('url')`.
+  3. Acquire a Google Cloud OIDC Identity Token for IAM service-to-service authentication using `_get_identity_token(endpoint)`.
+  4. Construct a standard A2A JSON-RPC 2.0 `message/send` payload and POST to Team B's endpoint with the Bearer token.
+  5. Return the JSON-RPC `result` object.
+
+#### 🧪 Standalone Verification (Team A):
+```bash
+# Run unit tests:
+cd extraction-orchestration-agent && uv run python -m pytest -v tests/
+
+# Deploy standalone to Cloud Run (mcp-lud-wew, europe-west3) in decoupled mock mode:
+gcloud run deploy hackathon-ext-agent \
+  --source ./extraction-orchestration-agent \
+  --region europe-west3 \
+  --project mcp-lud-wew \
+  --set-env-vars USE_A2A_MOCK=true \
+  --allow-unauthenticated \
+  --quiet
+```
 
 ---
 
@@ -106,7 +115,7 @@ governance_tool = FunctionTool(dispatch_a2a_compliance_check, require_confirmati
 
 ### ❓ Exercise B.2: A2A JSON-RPC Request Router
 - **Target File**: `compliance-governance-agent/internal/handler/jsonrpc.go`
-- **Task**: Implement `HandleJSONRPC()`. Unmarshal incoming A2A JSON-RPC 2.0 `message/send` requests, validate envelope headers, extract `ContractFacts` and `HistoricalVariance`, and route to the deterministic policy engine.
+- **Task**: Implement `HandleJSONRPC()`. Unmarshal incoming A2A JSON-RPC 2.0 `message/send` requests, validate envelope headers (return error `-32601` if method != `"message/send"`), extract `ContractFacts` and `HistoricalVariance`, and route to the deterministic policy engine.
 
 ---
 
@@ -118,16 +127,50 @@ governance_tool = FunctionTool(dispatch_a2a_compliance_check, require_confirmati
   3. `InsuranceAmount < $1,000,000.00` → Flagged
   4. `LiabilityCap == "unlimited"` → Flagged
   5. `VarianceFlagged == true` → Flagged
-  - Return `PASS` if 0 violations, or `REVIEW` if violations exist, along with an official rendered HTML audit certificate badge.
+  - Return `PASS` if 0 violations, or `REVIEW` if violations exist, along with an official rendered HTML audit certificate badge (`GenerateAuditCertificateHTML`).
+
+#### 🧪 Standalone Verification (Team B):
+```bash
+# Run unit tests:
+cd compliance-governance-agent && go test -v ./...
+
+# Deploy standalone to Cloud Run (mcp-lud-wew, europe-west3):
+gcloud run deploy hackathon-gov-agent \
+  --source ./compliance-governance-agent \
+  --region europe-west3 \
+  --project mcp-lud-wew \
+  --allow-unauthenticated \
+  --quiet
+
+# Verify remote endpoints directly via cURL:
+curl -s https://<hackathon-gov-agent-url>/.well-known/agent.json
+```
 
 ---
 
 ## 🚀 Joint Integration & Production Evaluation
 
 ### ❓ Joint Exercise 1: Multi-Agent Mesh Deployment
-- Deploy Team A (FastAPI / ADK Gateway) to Cloud Run in `europe-west3`.
-- Deploy Team B (Go Policy Engine) to Cloud Run in `europe-west3`.
-- Launch `cockpit-frontend/index.html` and run live contract audits.
+1. Connect Team A to Team B by updating Cloud Run environment:
+```bash
+gcloud run deploy hackathon-ext-agent \
+  --source ./extraction-orchestration-agent \
+  --region europe-west3 \
+  --project mcp-lud-wew \
+  --set-env-vars USE_A2A_MOCK=false,REMOTE_A2A_AGENT_CARD_URL=https://<hackathon-gov-agent-url>/.well-known/agent.json \
+  --allow-unauthenticated \
+  --quiet
+```
+2. Deploy Cockpit Frontend to Cloud Run in `europe-west3`:
+```bash
+gcloud run deploy hackathon-cockpit \
+  --source ./cockpit-frontend \
+  --region europe-west3 \
+  --project mcp-lud-wew \
+  --allow-unauthenticated \
+  --quiet
+```
+3. Open the Cockpit UI in your browser and run live contract audits against all sample agreements.
 
 ### ❓ Joint Exercise 2: Automated ADK Evaluations (`adk eval`)
 - Run deterministic eval suites to ensure model extraction accuracy across edge cases:

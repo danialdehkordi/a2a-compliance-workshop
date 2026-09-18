@@ -19,6 +19,8 @@ type AgentCard struct {
 	Protocols   []string `json:"protocols"`
 }
 
+var _ = json.Marshal
+
 func HandleAgentCard(baseURL string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO EXERCISE B.1:
