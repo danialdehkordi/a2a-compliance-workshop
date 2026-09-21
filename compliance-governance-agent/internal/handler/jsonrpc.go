@@ -8,6 +8,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"compliance-governance-agent/internal/policy"
@@ -18,6 +19,12 @@ type JSONRPCRequest struct {
 	ID      interface{}     `json:"id"`
 	Method  string          `json:"method"`
 	Params  json.RawMessage `json:"params"`
+}
+
+type JSONRPCError struct {
+	Code    int         `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 type JSONRPCResponse struct {
@@ -51,14 +58,66 @@ func HandleJSONRPC() http.HandlerFunc {
 			return
 		}
 
-		// TODO EXERCISE B.2:
-		// 1. Decode incoming JSON-RPC 2.0 request into `var req JSONRPCRequest`.
-		// 2. Validate that req.Method is "message/send" (return JSON-RPC error code -32601 if not).
-		// 3. Unmarshal req.Params into `A2AMessage` struct (return JSON-RPC error code -32602 if invalid).
-		// 4. Extract ContractFacts and HistoricalVariance from msg.Message.Parts[0].Data.
-		// 5. Call policy.EvaluateContractPolicy(facts, variance).
-		// 6. Wrap result in JSONRPCResponse{JSONRPC: "2.0", ID: req.ID, Result: result} and encode as JSON.
-		http.Error(w, "Exercise B.2: Implement HandleJSONRPC() in internal/handler/jsonrpc.go", http.StatusNotImplemented)
+		var req JSONRPCRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			res := JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      nil,
+				Error: JSONRPCError{
+					Code:    -32700,
+					Message: "Parse error: " + err.Error(),
+				},
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		if req.Method != "message/send" {
+			res := JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Error: JSONRPCError{
+					Code:    -32601,
+					Message: "Method not found",
+				},
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		var a2aMsg A2AMessage
+		if err := json.Unmarshal(req.Params, &a2aMsg); err != nil || len(a2aMsg.Message.Parts) == 0 {
+			res := JSONRPCResponse{
+				JSONRPC: "2.0",
+				ID:      req.ID,
+				Error: JSONRPCError{
+					Code:    -32602,
+					Message: "Invalid params",
+				},
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		partData := a2aMsg.Message.Parts[0].Data
+		facts := partData.Facts
+		if facts.CaseID == "" {
+			if partData.CaseID != "" {
+				facts.CaseID = partData.CaseID
+			} else if req.ID != nil {
+				facts.CaseID = fmt.Sprintf("%v", req.ID)
+			}
+		}
+
+		variance := partData.Variance
+		result := policy.EvaluateContractPolicy(facts, variance)
+
+		res := JSONRPCResponse{
+			JSONRPC: "2.0",
+			ID:      req.ID,
+			Result:  result,
+		}
+		json.NewEncoder(w).Encode(res)
 	}
 }
 

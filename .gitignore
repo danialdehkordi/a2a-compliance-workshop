@@ -1,0 +1,16 @@
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Compiled Go binaries
+*.exe
+*.test
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
